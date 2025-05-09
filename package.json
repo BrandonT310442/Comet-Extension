@@ -1,0 +1,32 @@
+{
+  "name": "vue-auth-app",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --port 5173",
+    "dev:force": "vite --port 5173 --force",
+    "server": "node server/index.js",
+    "dev:all": "concurrently \"npm run dev:force\" \"npm run server\"",
+    "clean": "rmdir /s /q node_modules\\.vite 2>nul || echo Cleaned",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.38.4",
+    "cookie-parser": "^1.4.6",
+    "cors": "^2.8.5",
+    "dotenv": "^16.0.3",
+    "express": "^4.18.2",
+    "jsonwebtoken": "^9.0.0",
+    "vue": "^3.3.4",
+    "vue-router": "^4.2.5"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^4.4.0",
+    "concurrently": "^8.0.1",
+    "nodemon": "^2.0.22",
+    "sass": "^1.69.5",
+    "vite": "^4.4.11"
+  }
+} 

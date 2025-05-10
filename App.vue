@@ -25,15 +25,13 @@ export default {
           // Store auth flag in localStorage
           localStorage.setItem('isAuthenticated', 'true');
           
-          // Redirect to dashboard if we're on the auth page
-          if (this.$route.path === '/' || this.$route.path === '/auth') {
-            this.$router.push('/dashboard');
-          }
+          // User is authenticated, allow them to stay on the current page
+          // No need to redirect since Dashboard is now the main page
         } else {
           console.log('Not authenticated in Chrome extension');
           
-          // If not authenticated and not on auth page, redirect to auth
-          if (this.$route.path !== '/' && this.$route.path !== '/auth' && this.$route.path !== '/callback') {
+          // If not authenticated and not on auth page or callback, redirect to auth
+          if (this.$route.path !== '/auth' && this.$route.path !== '/callback' && this.$route.path !== '/verify-email') {
             // Remove auth flag
             localStorage.removeItem('isAuthenticated');
             
@@ -56,17 +54,14 @@ export default {
           .then(data => {
             if (data.user) {
               console.log('Already authenticated in web app', data.user);
-              
-              // Redirect to dashboard if we're on the auth page
-              if (this.$route.path === '/' || this.$route.path === '/auth') {
-                this.$router.push('/dashboard');
-              }
+              // User is authenticated, allow them to stay on the current page
+              // No need to redirect since Dashboard is now the main page
             } else {
               console.log('Session expired in web app');
               localStorage.removeItem('isAuthenticated');
               
-              // If not on auth page, redirect to auth
-              if (this.$route.path !== '/' && this.$route.path !== '/auth' && this.$route.path !== '/callback') {
+              // If not on auth page or callback, redirect to auth
+              if (this.$route.path !== '/auth' && this.$route.path !== '/callback' && this.$route.path !== '/verify-email') {
                 this.$router.push('/auth');
               }
             }
@@ -75,14 +70,16 @@ export default {
             console.error('Error checking auth state:', error);
             localStorage.removeItem('isAuthenticated');
             
-            // If not on auth page, redirect to auth
-            if (this.$route.path !== '/' && this.$route.path !== '/auth' && this.$route.path !== '/callback') {
-              this.$router.push('/auth');
+            // If not on auth page or callback, redirect to auth
+            if (this.$route.path !== '/auth' && this.$route.path !== '/callback' && this.$route.path !== '/verify-email') {
+                this.$router.push('/auth');
             }
           });
-      } else if (this.$route.path !== '/' && this.$route.path !== '/auth' && this.$route.path !== '/callback') {
-        // Not authenticated and not on auth page, redirect to auth
-        this.$router.push('/auth');
+      } else {
+        // Not authenticated, redirect to auth unless already on auth-related pages
+        if (this.$route.path !== '/auth' && this.$route.path !== '/callback' && this.$route.path !== '/verify-email') {
+          this.$router.push('/auth');
+        }
       }
     }
   }

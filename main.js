@@ -11,12 +11,12 @@ import './main.css'
 const routes = [
   {
     path: '/',
-    name: 'Auth',
-    component: Auth
+    name: 'Dashboard',
+    component: Dashboard
   },
   {
     path: '/auth',
-    name: 'AuthRedirect',
+    name: 'Auth',
     component: Auth
   },
   {
@@ -28,11 +28,6 @@ const routes = [
     path: '/verify-email',
     name: 'VerifyEmail',
     component: VerifyEmail
-  },
-  {
-    path: '/dashboard',
-    name: 'Dashboard',
-    component: Dashboard
   }
 ]
 

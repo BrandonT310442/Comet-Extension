@@ -6,17 +6,37 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Auth Extension</title>
     <style>
-      body {
+      html, body {
         width: 480px;
-        height: 600px;
+        height: 600px !important;
+        min-height: 600px !important;
         margin: 0;
         padding: 0;
         overflow: auto;
       }
     </style>
+    <!-- Fix for extension height issue -->
+    <script>
+      // Execute immediately to fix height
+      (function() {
+        // Force minimum height on the document
+        document.documentElement.style.minHeight = '600px';
+        document.documentElement.style.height = '600px';
+      })();
+    </script>
   </head>
   <body>
     <div id="app"></div>
     <script type="module" src="/main.js"></script>
+    
+    <!-- Fix for extension height issue when reopening -->
+    <script>
+      // This runs when the DOM is loaded
+      document.addEventListener('DOMContentLoaded', function() {
+        // Force minimum height on the body
+        document.body.style.minHeight = '600px';
+        document.body.style.height = '600px';
+      });
+    </script>
   </body>
-</html> 
+</html>

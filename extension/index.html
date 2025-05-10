@@ -4,21 +4,41 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Auth Extension</title>
+    <title>Eclipse</title>
     <style>
-      body {
+      html, body {
         width: 480px;
-        height: 600px;
+        height: 600px !important;
+        min-height: 600px !important;
         margin: 0;
         padding: 0;
         overflow: auto;
       }
     </style>
-    <script type="module" crossorigin src="/assets/main-ab6a44d1.js"></script>
-    <link rel="stylesheet" href="/assets/index-b2eb7e27.css">
+    <!-- Fix for extension height issue -->
+    <script>
+      // Execute immediately to fix height
+      (function() {
+        // Force minimum height on the document
+        document.documentElement.style.minHeight = '600px';
+        document.documentElement.style.height = '600px';
+      })();
+    </script>
+    <script type="module" crossorigin src="/assets/main-e312b03d.js"></script>
+    <link rel="stylesheet" href="/assets/index-6c64c378.css">
   </head>
   <body>
     <div id="app"></div>
     
+    
+    <!-- Fix for extension height issue when reopening -->
+    <script>
+      // This runs when the DOM is loaded
+      document.addEventListener('DOMContentLoaded', function() {
+        // Force minimum height on the body
+        document.body.style.minHeight = '600px';
+        document.body.style.height = '600px';
+      });
+    </script>
   </body>
-</html> 
+</html>

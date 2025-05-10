@@ -145,8 +145,8 @@ export default {
               name: data.user.name || ''
             }
             
-            // Redirect to dashboard
-            this.$router.push('/dashboard')
+            // Redirect to dashboard (which is now the root path)
+            this.$router.push('/')
           } else {
             // If the session is invalid, clear the localStorage
             localStorage.removeItem('isAuthenticated')
@@ -211,6 +211,10 @@ export default {
         // Set a flag in localStorage to indicate the user is authenticated
         localStorage.setItem('isAuthenticated', 'true')
         
+        // Store user data in localStorage for persistence
+        if (data.user.name) localStorage.setItem('userName', data.user.name);
+        if (data.user.email) localStorage.setItem('userEmail', data.user.email);
+        
         // Store minimal non-sensitive data in memory
         this.user = {
           id: data.user.id,
@@ -220,14 +224,18 @@ export default {
         
         // For Chrome extension, use storage.local as well
         if (typeof chrome !== 'undefined' && chrome.runtime && chrome.storage) {
-          chrome.storage.local.set({ 'isAuthenticated': true }, function() {
-            console.log('Authentication state saved in chrome.storage');
+          chrome.storage.local.set({ 
+            'isAuthenticated': true,
+            'userName': data.user.name || '',
+            'userEmail': data.user.email || ''
+          }, function() {
+            console.log('Authentication state and user data saved in chrome.storage');
           });
         }
         
         // Redirect to dashboard - use a slight delay to ensure storage is set
         setTimeout(() => {
-          this.$router.push('/dashboard');
+          this.$router.push('/');
         }, 100);
       } catch (error) {
         console.error('Login error:', error)
@@ -273,6 +281,10 @@ export default {
           // Set a flag in localStorage to indicate the user is authenticated
           localStorage.setItem('isAuthenticated', 'true')
           
+          // Store user data in localStorage for persistence
+          if (data.user.name) localStorage.setItem('userName', data.user.name);
+          if (data.user.email) localStorage.setItem('userEmail', data.user.email);
+          
           // Store minimal non-sensitive data in memory
           this.user = {
             id: data.user.id,
@@ -282,14 +294,18 @@ export default {
           
           // For Chrome extension, use storage.local as well
           if (typeof chrome !== 'undefined' && chrome.runtime && chrome.storage) {
-            chrome.storage.local.set({ 'isAuthenticated': true }, function() {
-              console.log('Authentication state saved in chrome.storage');
+            chrome.storage.local.set({ 
+              'isAuthenticated': true,
+              'userName': data.user.name || '',
+              'userEmail': data.user.email || ''
+            }, function() {
+              console.log('Authentication state and user data saved in chrome.storage');
             });
           }
           
           // Redirect to dashboard - use a slight delay to ensure storage is set
           setTimeout(() => {
-            this.$router.push('/dashboard');
+            this.$router.push('/');
           }, 100);
         } else if (data.requiresEmailConfirmation) {
           // Show verification dialog

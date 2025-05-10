@@ -8,9 +8,9 @@
 </template>
 
 <script>
-import { createClient } from '@/utils/supabase/client'
+import { createClient } from './utils/supabase/client'
 import { onMounted } from 'vue'
-import { refreshUser } from '@/lib/auth'  // Import the refreshUser method
+import { refreshUser } from './lib/auth'
 import { useRouter } from 'vue-router'
 
 export default {
@@ -22,26 +22,102 @@ export default {
       try {
         const supabase = createClient()
         
-        // Exchange code for session
-        const { error } = await supabase.auth.exchangeCodeForSession(
-          window.location.search
-        )
+        // Process the OAuth callback using Supabase's built-in handling
+        const { data, error } = await supabase.auth.getSession()
         
         if (error) {
-          console.error('Error exchanging code for session:', error)
-          // Redirect to auth page with error message
-          router.push(`/auth?error=${encodeURIComponent(error.message)}`)
+          console.error('Error getting session:', error)
+          router.push('/auth')
           return
         }
         
-        // Refresh the user state to make sure it's updated
+        if (data.session) {
+          console.log('Session established successfully')
+          
+          // Call the server to create a server-side session
+          try {
+            const response = await fetch('http://localhost:3000/auth/oauth-callback', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              credentials: 'include',
+              body: JSON.stringify({
+                access_token: data.session.access_token,
+                refresh_token: data.session.refresh_token,
+                user: data.user
+              })
+            })
+            
+            if (!response.ok) {
+              throw new Error('Failed to create server session')
+            }
+            
+            console.log('Server session created successfully')
+          } catch (serverError) {
+            console.error('Error creating server session:', serverError)
+            // Continue anyway as we might still have a valid session
+          }
+          
+          // Refresh the user state in our application
+          await refreshUser()
+          
+          // Redirect to dashboard
+          router.push('/dashboard')
+          return
+        }
+        
+        // If we don't have a session yet, try to exchange the code for a session
+        const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(window.location.href)
+        
+        if (exchangeError) {
+          console.error('Error exchanging code for session:', exchangeError)
+          router.push('/auth')
+          return
+        }
+        
+        // Get the session after code exchange
+        const { data: sessionData, error: sessionError } = await supabase.auth.getSession()
+        
+        if (sessionError || !sessionData?.session) {
+          console.error('Error getting session after code exchange:', sessionError)
+          router.push('/auth')
+          return
+        }
+        
+        // Call the server to create a server-side session
+        try {
+          const response = await fetch('http://localhost:3000/auth/oauth-callback', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            credentials: 'include',
+            body: JSON.stringify({
+              access_token: sessionData.session.access_token,
+              refresh_token: sessionData.session.refresh_token,
+              user: sessionData.user
+            })
+          })
+          
+          if (!response.ok) {
+            throw new Error('Failed to create server session')
+          }
+          
+          console.log('Server session created successfully')
+        } catch (serverError) {
+          console.error('Error creating server session:', serverError)
+          // Continue anyway as we might still have a valid session
+        }
+        
+        // Refresh the user state
         await refreshUser()
         
-        // Redirect to dashboard on success
+        // Redirect to dashboard
         router.push('/dashboard')
       } catch (error) {
         console.error('Error in callback handling:', error)
-        router.push(`/auth?error=${encodeURIComponent('Authentication failed')}`)
+        router.push('/auth')
       }
     })
     

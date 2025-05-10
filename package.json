@@ -8,8 +8,9 @@
     "dev:force": "vite --port 5173 --force",
     "server": "node server/index.js",
     "dev:all": "concurrently \"npm run dev:force\" \"npm run server\"",
-    "clean": "rmdir /s /q node_modules\\.vite 2>nul || echo Cleaned",
+    "clean": "rmdir /s /q node_modules\\.vite_cache 2>nul || echo Cleaned",
     "build": "vite build",
+    "build:extension": "vite build",
     "preview": "vite preview"
   },
   "dependencies": {

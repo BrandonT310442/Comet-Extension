@@ -1,109 +1,83 @@
 <template>
-  <div class="auth-page">
-    <div class="auth-container">
-      <div class="auth-card card">
-        <div class="auth-header">
-          <router-link to="/" class="logo-link">
-            <Logo />
-          </router-link>
-          <div class="auth-tabs">
-            <button 
-              :class="['tab-btn', { active: isLogin }]" 
-              @click="isLogin = true"
-            >
-              Log in
-            </button>
-            <button 
-              :class="['tab-btn', { active: !isLogin }]" 
-              @click="isLogin = false"
-            >
-              Sign up
-            </button>
-          </div>
-        </div>
-
-        <div class="progress-bar" v-if="!isLogin">
-          <div class="progress" :style="{ width: progress + '%' }"></div>
-          <span class="progress-text">{{ progress }}% Complete</span>
-        </div>
-
-        <div v-if="errorMsg" class="error-message">
-          {{ errorMsg }}
-        </div>
-
-        <div v-if="successMsg" class="success-message">
-          {{ successMsg }}
-        </div>
-
-        <form @submit.prevent="handleSubmit" class="auth-form">
-          <div class="form-group" v-if="!isLogin">
-            <label>Full Name</label>
-            <input 
-              type="text" 
-              v-model="form.name" 
-              class="input" 
-              placeholder="John Doe"
-              required
-            >
-          </div>
-
-          <div class="form-group">
-            <label>Email</label>
-            <input 
-              type="email" 
-              v-model="form.email" 
-              class="input" 
-              placeholder="your@email.com"
-              required
-            >
-          </div>
-
-          <div class="form-group">
-            <label>Password</label>
-            <input 
-              type="password" 
-              v-model="form.password" 
-              class="input" 
-              placeholder="••••••••"
-              required
-              minlength="6"
-            >
-          </div>
-          
-          <div class="form-group" v-if="!isLogin">
-            <label>Confirm Password</label>
-            <input 
-              type="password" 
-              v-model="form.confirmPassword" 
-              class="input" 
-              placeholder="••••••••"
-              required
-              minlength="6"
-            >
-            <div class="password-mismatch" v-if="passwordsMismatch">
-              Passwords do not match
-            </div>
-          </div>
-
-          <div class="oauth-buttons">
-            <button type="button" class="btn btn-secondary oauth-btn" @click="signInWithGoogle">
-              <img src="https://www.google.com/favicon.ico" alt="Google" class="oauth-icon">
-              Continue with Google
-            </button>
-          </div>
-
-          <button type="submit" class="btn btn-primary submit-btn" :disabled="loading || (!isLogin && passwordsMismatch)">
-            {{ loading ? 'Processing...' : (isLogin ? 'Log in' : 'Create account') }}
-          </button>
-        </form>
-
-        <p class="auth-footer">
-          {{ isLogin ? "Don't have an account? " : "Already have an account? " }}
-          <a href="#" @click.prevent="isLogin = !isLogin">
-            {{ isLogin ? 'Sign up' : 'Log in' }}
-          </a>
-        </p>
+  <div class="auth-bg">
+    <div class="auth-card">
+      <div class="auth-header">
+        <Logo />
       </div>
+      <div class="auth-tabs">
+        <button :class="['tab-btn', { active: isLogin }]" @click="isLogin = true">Log in</button>
+        <button :class="['tab-btn', { active: !isLogin }]" @click="isLogin = false">Sign up</button>
+      </div>
+      
+      <!-- Verification Success Message -->
+      <div v-if="verificationSuccess" class="message-box success">
+        <div class="message-icon">✓</div>
+        <div class="message-content">
+          <h3>Email Verified!</h3>
+          <p>Your email has been successfully verified. You can now log in.</p>
+        </div>
+        <button class="close-btn" @click="verificationSuccess = false">&times;</button>
+      </div>
+      
+      <!-- Verification Error Message -->
+      <div v-if="verificationError" class="message-box error">
+        <div class="message-icon">!</div>
+        <div class="message-content">
+          <h3>Verification Failed</h3>
+          <p>There was a problem verifying your email. Please try again.</p>
+        </div>
+        <button class="close-btn" @click="verificationError = false">&times;</button>
+      </div>
+      
+      <!-- Error Message -->
+      <div v-if="errorMsg" class="message-box error">
+        <div class="message-icon">!</div>
+        <div class="message-content">
+          <h3>Error</h3>
+          <p>{{ errorMsg }}</p>
+        </div>
+        <button class="close-btn" @click="errorMsg = ''">&times;</button>
+      </div>
+      
+      <!-- Email Verification Dialog -->
+      <div v-if="showVerificationDialog" class="verification-dialog">
+        <div class="verification-content">
+          <div class="verification-icon">✉️</div>
+          <h2>Verify Your Email</h2>
+          <p>We've sent a verification email to <strong>{{ form.email }}</strong>.</p>
+          <p>Please check your inbox and click the verification link to complete your registration.</p>
+          <p class="verification-note">If you don't see the email, check your spam folder.</p>
+        </div>
+      </div>
+      
+      <form @submit.prevent="handleSubmit" class="auth-form" v-if="!showVerificationDialog">
+        <div v-if="!isLogin" class="form-group">
+          <label>Full Name</label>
+          <input type="text" v-model="form.name" class="input" placeholder="John Doe" required />
+        </div>
+        <div class="form-group">
+          <label>Email</label>
+          <input type="email" v-model="form.email" class="input" placeholder="your@email.com" required />
+        </div>
+        <div class="form-group">
+          <label>Password</label>
+          <input type="password" v-model="form.password" class="input" placeholder="••••••••" required minlength="6" />
+        </div>
+        <div v-if="!isLogin" class="form-group">
+          <label>Confirm Password</label>
+          <input type="password" v-model="form.confirmPassword" class="input" placeholder="••••••••" required minlength="6" />
+          <div class="password-mismatch" v-if="passwordsMismatch">Passwords do not match</div>
+        </div>
+        <div class="oauth-buttons">
+          <button type="button" class="btn oauth-btn" @click="signInWithGoogle">
+            <img src="https://www.google.com/favicon.ico" alt="Google" class="oauth-icon" />
+            Continue with Google
+          </button>
+        </div>
+        <button type="submit" class="btn primary-btn" :disabled="loading || (!isLogin && passwordsMismatch)">
+          {{ loading ? 'Processing...' : (isLogin ? 'Log in' : 'Sign up') }}
+        </button>
+      </form>
     </div>
   </div>
 </template>
@@ -112,20 +86,21 @@
 import Logo from './components/Logo.vue'
 import { createClient } from './utils/supabase/client'
 import { onMounted, watch } from 'vue'
-import { refreshUser } from './lib/auth'  // This should work now
+import { refreshUser } from './lib/auth'
 
 export default {
   name: 'Auth',
-  components: {
-    Logo
-  },
+  components: { Logo },
   data() {
     return {
       isLogin: true,
-      progress: 60,
       loading: false,
       errorMsg: '',
       successMsg: '',
+      showVerificationDialog: false,
+      verificationSuccess: false,
+      verificationError: false,
+      user: null, // Store user data in memory
       form: {
         name: '',
         email: '',
@@ -139,49 +114,27 @@ export default {
       return this.form.password !== this.form.confirmPassword && this.form.confirmPassword.length > 0
     }
   },
-  created() {
-    // Check for error or success parameters
-    const params = new URLSearchParams(window.location.search)
-    const error = params.get('error')
-    const type = params.get('type')
-    
-    if (error) {
-      this.errorMsg = error === 'callback_error' 
-        ? 'Authentication failed. Please try again.' 
-        : decodeURIComponent(error)
-    }
-    
-    if (type === 'signup' && !error) {
-      this.successMsg = 'Your account has been created. Please check your email to confirm your registration.'
-    }
-  },
   mounted() {
-    // Check authentication status when component is mounted
-    this.checkAuthStatus()
+    // Check URL parameters for verification status
+    const urlParams = new URLSearchParams(window.location.search)
+    const error = urlParams.get('error')
+    
+    if (error === 'verification_failed') {
+      this.verificationError = true
+      // Clean up the URL
+      history.replaceState({}, document.title, window.location.pathname)
+    }
+    
+    // Check if user is already logged in via Chrome storage
+    // Removed Chrome storage check
   },
   methods: {
-    async checkAuthStatus() {
-      try {
-        const response = await fetch('http://localhost:3000/auth/user', {
-          method: 'GET',
-          credentials: 'include' // Important for cookies to be sent
-        })
-        
-        const data = await response.json()
-        
-        if (data.user) {
-          console.log('User already authenticated, redirecting to dashboard')
-          this.$router.push('/dashboard')
-        }
-      } catch (error) {
-        console.error('Error checking auth status:', error)
-      }
+    async checkAuthState() {
+      // Removed Chrome storage check
     },
-    
     async handleSubmit() {
       this.loading = true
       this.errorMsg = ''
-      
       try {
         if (this.isLogin) {
           await this.handleLogin()
@@ -193,99 +146,146 @@ export default {
         }
       } catch (error) {
         this.errorMsg = error.message || 'An error occurred during authentication'
-        console.error('Auth error:', error)
       } finally {
         this.loading = false
       }
     },
-    
     async handleLogin() {
-      const response = await fetch('http://localhost:3000/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        credentials: 'include', // Important for cookies to be stored
-        body: JSON.stringify({
-          email: this.form.email,
-          password: this.form.password
+      try {
+        // Send message to background script if in Chrome extension context
+        if (typeof chrome !== 'undefined' && chrome.runtime) {
+          chrome.runtime.sendMessage({
+            action: 'login',
+            data: {
+              email: this.form.email,
+              password: this.form.password
+            }
+          })
+        }
+        
+        const response = await fetch('http://localhost:3000/auth/login', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          credentials: 'include', // Important for cookies to be stored
+          body: JSON.stringify({
+            email: this.form.email,
+            password: this.form.password
+          })
         })
-      })
-      
-      const data = await response.json()
-      
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to log in')
-      }
-      
-      // Refresh the user state to make sure it's updated
-      await refreshUser()
-      
-      // Redirect to dashboard
-      this.$router.push('/dashboard')
-    },
-    
-    async handleSignup() {
-      const response = await fetch('http://localhost:3000/auth/signup', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        credentials: 'include', // Important for cookies to be stored
-        body: JSON.stringify({
-          email: this.form.email,
-          password: this.form.password,
-          name: this.form.name
-        })
-      })
-      
-      const data = await response.json()
-      
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to sign up')
-      }
-      
-      if (data.user) {
+        
+        const data = await response.json()
+        
+        if (!response.ok) {
+          throw new Error(data.error || 'Failed to log in')
+        }
+        
+        // Store user data in memory
+        this.user = data.user; // Store user data in memory
+        
         // Refresh the user state to make sure it's updated
         await refreshUser()
         
-        // User is automatically signed in (email confirmation disabled)
+        // Redirect to dashboard
         this.$router.push('/dashboard')
-      } else {
-        // Email confirmation is required
-        this.successMsg = 'Please check your email to confirm your registration'
-        this.form = { name: '', email: '', password: '', confirmPassword: '' } // Clear form
+      } catch (error) {
+        console.error('Login error:', error)
+        throw error
       }
     },
-    
+    async handleSignup() {
+      try {
+        // Send message to background script if in Chrome extension context
+        if (typeof chrome !== 'undefined' && chrome.runtime) {
+          chrome.runtime.sendMessage({
+            action: 'signup',
+            data: {
+              email: this.form.email,
+              password: this.form.password,
+              name: this.form.name
+            }
+          })
+        }
+        
+        const response = await fetch('http://localhost:3000/auth/signup', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          credentials: 'include', // Important for cookies to be stored
+          body: JSON.stringify({
+            email: this.form.email,
+            password: this.form.password,
+            name: this.form.name
+          })
+        })
+        
+        const data = await response.json()
+        
+        if (!response.ok) {
+          throw new Error(data.error || 'Failed to sign up')
+        }
+        
+        // Store user data in memory
+        this.user = data.user; // Store user data in memory
+        
+        if (data.requiresEmailConfirmation) {
+          // Show verification dialog
+          this.showVerificationDialog = true
+          // Clear form
+          this.form = { name: '', email: this.form.email, password: '', confirmPassword: '' }
+        } else {
+          // Generic success message
+          this.successMsg = 'Account created successfully'
+          this.form = { name: '', email: '', password: '', confirmPassword: '' } // Clear form
+        }
+      } catch (error) {
+        console.error('Signup error:', error)
+        throw error
+      }
+    },
     async signInWithGoogle() {
       this.loading = true
       this.errorMsg = ''
       
       try {
-        // For OAuth like Google, we still use the Supabase client directly
-        // as it handles the OAuth flow which needs to open in the browser
         const supabase = createClient()
         
+        // Create a popup window for OAuth (needed for Chrome extension)
+        const popupWindow = window.open('about:blank', 'googleLogin', 'width=600,height=600')
+        
+        // Use signInWithOAuth with the correct configuration
         const { data, error } = await supabase.auth.signInWithOAuth({
           provider: 'google',
           options: {
-            redirectTo: `${window.location.origin}/auth/callback`,
-            queryParams: {
-              access_type: 'offline',
-              prompt: 'consent'
-            }
+            redirectTo: `${window.location.origin}/callback`,
+            scopes: 'email profile',
+            skipBrowserRedirect: true // Important for Chrome extension
           }
         })
         
         if (error) throw error
         
-        // For OAuth, we don't redirect here as the user will be redirected by Supabase
+        if (data && data.url) {
+          // Redirect the popup to the OAuth URL
+          popupWindow.location.href = data.url
+          
+          // Monitor for popup closure
+          const checkPopup = setInterval(() => {
+            if (popupWindow.closed) {
+              clearInterval(checkPopup)
+              this.loading = false
+              
+              // Check auth state after popup closes
+              // Removed Chrome storage check
+            }
+          }, 500)
+        }
       } catch (error) {
+        this.loading = false
         this.errorMsg = 'Failed to sign in with Google'
         console.error('Google sign-in error:', error)
-      } finally {
-        this.loading = false
       }
     }
   }
@@ -293,292 +293,240 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-.password-mismatch {
-  color: #ef4444;
-  font-size: 0.8rem;
-  margin-top: 0.25rem;
-}
-
-.auth-page {
+.auth-bg {
   min-height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 2rem;
-  position: relative;
-  overflow: hidden;
-
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: radial-gradient(circle at center, rgba(99, 102, 241, 0.1) 0%, transparent 70%);
-    pointer-events: none;
-  }
+  background: radial-gradient(circle at 50% 0%, #f1f5fe 0%, #f8fafc 100%);
 }
-
-.auth-container {
-  width: 100%;
-  max-width: 480px;
-  position: relative;
-  z-index: 1;
-}
-
 .auth-card {
-  padding: 2.5rem;
+  background: #fff;
+  border-radius: 1.5rem;
+  box-shadow: 0 8px 32px rgba(99, 102, 241, 0.08), 0 1.5px 6px rgba(0,0,0,0.03);
+  padding: 2.5rem 2.5rem 2rem 2.5rem;
+  width: 480px;
+  max-width: 98vw;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
   position: relative;
-  overflow: hidden;
-  background: var(--background-primary);
-  border: 1px solid var(--border-color);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-
-  &::before {
-    content: '';
-    position: absolute;
-    top: -50%;
-    left: -50%;
-    width: 200%;
-    height: 200%;
-    background: radial-gradient(circle at center, rgba(99, 102, 241, 0.1) 0%, transparent 70%);
-    pointer-events: none;
-  }
 }
-
 .auth-header {
-  text-align: center;
-  margin-bottom: 2.5rem;
-
-  .logo-link {
-    text-decoration: none;
-    display: inline-block;
-    margin-bottom: 2rem;
-  }
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1.5rem;
 }
-
 .auth-tabs {
   display: flex;
-  gap: 1rem;
+  justify-content: center;
   margin-bottom: 2rem;
-  position: relative;
-
-  &::after {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: 1px;
-    background: var(--border-color);
-  }
-
+  border-bottom: 1px solid #e5e7eb;
   .tab-btn {
     flex: 1;
-    padding: 0.75rem;
-    background: transparent;
+    background: none;
     border: none;
-    color: var(--text-secondary);
+    font-size: 1.1rem;
+    font-weight: 500;
+    color: #6b7280;
+    padding: 0.75rem 0;
     cursor: pointer;
-    transition: all 0.3s ease;
-    position: relative;
-    z-index: 1;
-
-    &::after {
-      content: '';
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      width: 100%;
-      height: 2px;
-      background: var(--gradient-primary);
-      transform: scaleX(0);
-      transition: transform 0.3s ease;
-    }
-
+    border-bottom: 2px solid transparent;
+    transition: color 0.2s, border-color 0.2s;
     &.active {
-      color: var(--text-primary);
-
-      &::after {
-        transform: scaleX(1);
-      }
-    }
-
-    &:hover {
-      color: var(--text-primary);
+      color: #3730a3;
+      border-bottom: 2px solid #6366f1;
     }
   }
 }
-
-.progress-bar {
-  height: 4px;
-  background: var(--bg-secondary);
-  border-radius: 2px;
-  margin-bottom: 2rem;
-  position: relative;
-  overflow: hidden;
-
-  .progress {
-    height: 100%;
-    background: var(--gradient-primary);
-    border-radius: 2px;
-    transition: width 0.3s ease;
-    position: relative;
-    overflow: hidden;
-
-    &::after {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-      animation: shimmer 2s infinite;
-    }
-  }
-
-  .progress-text {
-    position: absolute;
-    right: 0;
-    top: -1.5rem;
-    font-size: 0.875rem;
-    color: var(--text-secondary);
-  }
-}
-
 .auth-form {
-  .form-group {
-    margin-bottom: 1.5rem;
-
-    label {
-      display: block;
-      margin-bottom: 0.5rem;
-      color: var(--text-secondary);
-      font-size: 0.875rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  label {
+    font-size: 1rem;
+    color: #374151;
+    font-weight: 500;
+  }
+  .input {
+    border: 1px solid #e5e7eb;
+    border-radius: 0.75rem;
+    padding: 0.85rem 1.1rem;
+    font-size: 1rem;
+    background: #f8fafc;
+    color: #111827;
+    transition: border 0.2s;
+    &:focus {
+      border-color: #6366f1;
+      outline: none;
+      background: #fff;
     }
   }
 }
-
 .oauth-buttons {
-  margin: 2rem 0;
-
+  margin: 1.5rem 0 0.5rem 0;
   .oauth-btn {
     width: 100%;
+    display: flex;
+    align-items: center;
     justify-content: center;
-    background: var(--background-secondary);
-    border: 1px solid var(--border-color);
-    transition: all 0.3s ease;
-
+    gap: 0.5rem;
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 0.75rem;
+    padding: 0.85rem 0;
+    font-size: 1rem;
+    font-weight: 500;
+    color: #374151;
+    cursor: pointer;
+    transition: background 0.2s, border 0.2s;
     &:hover {
-      background: var(--background-tertiary);
-      transform: translateY(-2px);
+      background: #f1f5fe;
+      border-color: #6366f1;
     }
-
     .oauth-icon {
-      width: 18px;
-      height: 18px;
+      width: 20px;
+      height: 20px;
     }
   }
 }
-
-.submit-btn {
+.primary-btn {
   width: 100%;
-  position: relative;
-  overflow: hidden;
-
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.1), transparent);
-    transform: translateX(-100%);
-    transition: transform 0.6s ease;
-  }
-
-  &:hover::before {
-    transform: translateX(100%);
+  background: linear-gradient(90deg, #6366f1 0%, #4f46e5 100%);
+  color: #fff;
+  border: none;
+  border-radius: 0.75rem;
+  padding: 0.95rem 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-top: 0.5rem;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.08);
+  transition: background 0.2s, box-shadow 0.2s;
+  &:hover {
+    background: linear-gradient(90deg, #818cf8 0%, #6366f1 100%);
+    box-shadow: 0 4px 16px rgba(99, 102, 241, 0.12);
   }
 }
-
-.auth-footer {
-  text-align: center;
-  margin-top: 2rem;
-  color: var(--text-secondary);
-  font-size: 0.875rem;
-
-  a {
-    color: var(--primary);
-    text-decoration: none;
-    position: relative;
-    padding: 0.25rem 0;
-
-    &::after {
-      content: '';
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      width: 100%;
-      height: 1px;
-      background: var(--gradient-primary);
-      transform: scaleX(0);
-      transition: transform 0.3s ease;
-    }
-
-    &:hover {
-      color: var(--primary-light);
-
-      &::after {
-        transform: scaleX(1);
-      }
-    }
-  }
-}
-
-.error-message {
-  background-color: rgba(239, 68, 68, 0.1);
+.password-mismatch {
   color: #ef4444;
-  padding: 0.75rem;
-  border-radius: 0.5rem;
+  font-size: 0.9rem;
+  margin-top: 0.25rem;
+}
+
+/* Verification Dialog */
+.verification-dialog {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: #fff;
+  border-radius: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  z-index: 10;
+}
+
+.verification-content {
+  text-align: center;
+  max-width: 90%;
+}
+
+.verification-icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+}
+
+.verification-content h2 {
+  color: #3730a3;
+  margin-bottom: 1rem;
+}
+
+.verification-content p {
+  color: #4b5563;
+  margin-bottom: 0.75rem;
+  line-height: 1.5;
+}
+
+.verification-note {
+  font-size: 0.9rem;
+  color: #6b7280;
+  font-style: italic;
+  margin-top: 1rem;
   margin-bottom: 1.5rem;
-  font-size: 0.875rem;
 }
 
-.success-message {
-  background-color: rgba(20, 184, 166, 0.1);
-  color: #14b8a6;
-  padding: 0.75rem;
-  border-radius: 0.5rem;
+/* Message boxes */
+.message-box {
+  display: flex;
+  align-items: flex-start;
+  padding: 1rem;
+  border-radius: 0.75rem;
   margin-bottom: 1.5rem;
-  font-size: 0.875rem;
 }
 
-@keyframes shimmer {
-  0% {
-    transform: translateX(-100%);
-  }
-  100% {
-    transform: translateX(100%);
-  }
+.message-box.success {
+  background-color: #f0fdf4;
+  border: 1px solid #86efac;
 }
 
-@media (max-width: 768px) {
-  .auth-page {
-    padding: 1rem;
-  }
+.message-box.error {
+  background-color: #fef2f2;
+  border: 1px solid #fecaca;
+}
 
-  .auth-card {
-    padding: 1.5rem;
-  }
+.message-icon {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  margin-right: 0.75rem;
+  flex-shrink: 0;
+}
 
-  .auth-header {
-    .logo-link {
-      font-size: 2rem;
-    }
-  }
+.message-box.success .message-icon {
+  background-color: #22c55e;
+  color: white;
+}
+
+.message-box.error .message-icon {
+  background-color: #ef4444;
+  color: white;
+}
+
+.message-content {
+  flex: 1;
+}
+
+.message-content h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}
+
+.message-content p {
+  font-size: 0.9rem;
+  color: #4b5563;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 1.25rem;
+  cursor: pointer;
+  color: #9ca3af;
+  padding: 0;
+  margin-left: 0.5rem;
 }
 </style> 

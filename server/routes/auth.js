@@ -143,7 +143,8 @@ router.post('/signup', async (req, res) => {
       options: {
         data: {
           name,
-        }
+        },
+        emailRedirectTo: `${process.env.CLIENT_URL || 'http://localhost:5173'}/verify-email`
       }
     });
     
@@ -234,6 +235,50 @@ router.get('/callback', async (req, res) => {
   } catch (error) {
     console.error('OAuth callback processing error:', error);
     return res.redirect('/?error=callback_error');
+  }
+});
+
+// Handle client-side OAuth flow
+router.post('/oauth-callback', async (req, res) => {
+  const { access_token, refresh_token, user } = req.body;
+  
+  if (!access_token || !user) {
+    return res.status(400).json({ error: 'Missing required OAuth data' });
+  }
+  
+  try {
+    // Verify the token with Supabase
+    const { data, error } = await supabase.auth.getUser(access_token);
+    
+    if (error || !data.user) {
+      console.error('Invalid OAuth token:', error);
+      return res.status(401).json({ error: 'Invalid OAuth token' });
+    }
+    
+    // Create JWT token
+    const token = jwt.sign(
+      { 
+        id: data.user.id,
+        email: data.user.email,
+        access_token: access_token
+      },
+      JWT_SECRET,
+      { expiresIn: '7d' }
+    );
+    
+    // Set JWT in cookie
+    res.cookie('auth_token', token, COOKIE_OPTIONS);
+    
+    return res.status(200).json({
+      user: {
+        id: data.user.id,
+        email: data.user.email,
+        name: data.user.user_metadata?.name || '',
+      }
+    });
+  } catch (error) {
+    console.error('OAuth client-side processing error:', error);
+    return res.status(500).json({ error: 'Failed to process OAuth authentication' });
   }
 });
 

@@ -1,9 +1,10 @@
 import { createApp } from 'vue'
-import { createRouter, createWebHistory } from 'vue-router'
+import { createRouter, createWebHashHistory } from 'vue-router'
 import App from './App.vue'
 import Auth from './Auth.vue'
 import Callback from './Callback.vue'
 import Dashboard from './Dashboard.vue'
+import VerifyEmail from './VerifyEmail.vue'
 import './main.css'
 
 // Define routes
@@ -14,9 +15,19 @@ const routes = [
     component: Auth
   },
   {
+    path: '/auth',
+    name: 'AuthRedirect',
+    component: Auth
+  },
+  {
     path: '/callback',
     name: 'Callback',
     component: Callback
+  },
+  {
+    path: '/verify-email',
+    name: 'VerifyEmail',
+    component: VerifyEmail
   },
   {
     path: '/dashboard',
@@ -25,9 +36,9 @@ const routes = [
   }
 ]
 
-// Create router instance
+// Create router instance with hash history for Chrome extension
 const router = createRouter({
-  history: createWebHistory(),
+  history: createWebHashHistory(),
   routes
 })
 

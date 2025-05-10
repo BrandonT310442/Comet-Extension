@@ -68,12 +68,6 @@
           <input type="password" v-model="form.confirmPassword" class="input" placeholder="••••••••" required minlength="6" />
           <div class="password-mismatch" v-if="passwordsMismatch">Passwords do not match</div>
         </div>
-        <div class="oauth-buttons">
-          <button type="button" class="btn oauth-btn" @click="signInWithGoogle">
-            <img src="https://www.google.com/favicon.ico" alt="Google" class="oauth-icon" />
-            Continue with Google
-          </button>
-        </div>
         <button type="submit" class="btn primary-btn" :disabled="loading || (!isLogin && passwordsMismatch)">
           {{ loading ? 'Processing...' : (isLogin ? 'Log in' : 'Sign up') }}
         </button>
@@ -125,12 +119,43 @@ export default {
       history.replaceState({}, document.title, window.location.pathname)
     }
     
-    // Check if user is already logged in via Chrome storage
-    // Removed Chrome storage check
+    // Check if user is already logged in via cookies
+    this.checkAuthState()
   },
   methods: {
     async checkAuthState() {
-      // Removed Chrome storage check
+      try {
+        // Check if we have an authentication token in localStorage
+        const isAuthenticated = localStorage.getItem('isAuthenticated')
+        
+        if (isAuthenticated === 'true') {
+          // Verify with the server that the session is still valid
+          const response = await fetch('http://localhost:3000/auth/user', {
+            method: 'GET',
+            credentials: 'include' // This sends the cookies
+          })
+          
+          const data = await response.json()
+          
+          if (data.user) {
+            // Only store minimal non-sensitive data in memory
+            this.user = {
+              id: data.user.id,
+              email: data.user.email,
+              name: data.user.name || ''
+            }
+            
+            // Redirect to dashboard
+            this.$router.push('/dashboard')
+          } else {
+            // If the session is invalid, clear the localStorage
+            localStorage.removeItem('isAuthenticated')
+          }
+        }
+      } catch (error) {
+        console.error('Error checking auth state:', error)
+        localStorage.removeItem('isAuthenticated')
+      }
     },
     async handleSubmit() {
       this.loading = true
@@ -180,15 +205,30 @@ export default {
         if (!response.ok) {
           throw new Error(data.error || 'Failed to log in')
         }
+          
+        console.log('Login successful, redirecting to dashboard');
         
-        // Store user data in memory
-        this.user = data.user; // Store user data in memory
+        // Set a flag in localStorage to indicate the user is authenticated
+        localStorage.setItem('isAuthenticated', 'true')
         
-        // Refresh the user state to make sure it's updated
-        await refreshUser()
+        // Store minimal non-sensitive data in memory
+        this.user = {
+          id: data.user.id,
+          email: data.user.email,
+          name: data.user.name || ''
+        }
         
-        // Redirect to dashboard
-        this.$router.push('/dashboard')
+        // For Chrome extension, use storage.local as well
+        if (typeof chrome !== 'undefined' && chrome.runtime && chrome.storage) {
+          chrome.storage.local.set({ 'isAuthenticated': true }, function() {
+            console.log('Authentication state saved in chrome.storage');
+          });
+        }
+        
+        // Redirect to dashboard - use a slight delay to ensure storage is set
+        setTimeout(() => {
+          this.$router.push('/dashboard');
+        }, 100);
       } catch (error) {
         console.error('Login error:', error)
         throw error
@@ -227,10 +267,31 @@ export default {
           throw new Error(data.error || 'Failed to sign up')
         }
         
-        // Store user data in memory
-        this.user = data.user; // Store user data in memory
-        
-        if (data.requiresEmailConfirmation) {
+        if (data.user) {
+          console.log('Signup successful, redirecting to dashboard');
+          
+          // Set a flag in localStorage to indicate the user is authenticated
+          localStorage.setItem('isAuthenticated', 'true')
+          
+          // Store minimal non-sensitive data in memory
+          this.user = {
+            id: data.user.id,
+            email: data.user.email,
+            name: data.user.name || ''
+          }
+          
+          // For Chrome extension, use storage.local as well
+          if (typeof chrome !== 'undefined' && chrome.runtime && chrome.storage) {
+            chrome.storage.local.set({ 'isAuthenticated': true }, function() {
+              console.log('Authentication state saved in chrome.storage');
+            });
+          }
+          
+          // Redirect to dashboard - use a slight delay to ensure storage is set
+          setTimeout(() => {
+            this.$router.push('/dashboard');
+          }, 100);
+        } else if (data.requiresEmailConfirmation) {
           // Show verification dialog
           this.showVerificationDialog = true
           // Clear form
@@ -243,49 +304,6 @@ export default {
       } catch (error) {
         console.error('Signup error:', error)
         throw error
-      }
-    },
-    async signInWithGoogle() {
-      this.loading = true
-      this.errorMsg = ''
-      
-      try {
-        const supabase = createClient()
-        
-        // Create a popup window for OAuth (needed for Chrome extension)
-        const popupWindow = window.open('about:blank', 'googleLogin', 'width=600,height=600')
-        
-        // Use signInWithOAuth with the correct configuration
-        const { data, error } = await supabase.auth.signInWithOAuth({
-          provider: 'google',
-          options: {
-            redirectTo: `${window.location.origin}/callback`,
-            scopes: 'email profile',
-            skipBrowserRedirect: true // Important for Chrome extension
-          }
-        })
-        
-        if (error) throw error
-        
-        if (data && data.url) {
-          // Redirect the popup to the OAuth URL
-          popupWindow.location.href = data.url
-          
-          // Monitor for popup closure
-          const checkPopup = setInterval(() => {
-            if (popupWindow.closed) {
-              clearInterval(checkPopup)
-              this.loading = false
-              
-              // Check auth state after popup closes
-              // Removed Chrome storage check
-            }
-          }, 500)
-        }
-      } catch (error) {
-        this.loading = false
-        this.errorMsg = 'Failed to sign in with Google'
-        console.error('Google sign-in error:', error)
       }
     }
   }

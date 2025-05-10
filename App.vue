@@ -10,7 +10,82 @@
 
 <script>
 export default {
-  name: 'App'
+  name: 'App',
+  mounted() {
+    // Check if we're in a Chrome extension context
+    const isExtension = typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.id;
+    
+    // Check authentication state
+    if (isExtension) {
+      // Use Chrome messaging for extensions
+      chrome.runtime.sendMessage({ action: 'check-auth' }, (response) => {
+        if (response && response.authenticated) {
+          console.log('Already authenticated in Chrome extension', response.user);
+          
+          // Store auth flag in localStorage
+          localStorage.setItem('isAuthenticated', 'true');
+          
+          // Redirect to dashboard if we're on the auth page
+          if (this.$route.path === '/' || this.$route.path === '/auth') {
+            this.$router.push('/dashboard');
+          }
+        } else {
+          console.log('Not authenticated in Chrome extension');
+          
+          // If not authenticated and not on auth page, redirect to auth
+          if (this.$route.path !== '/' && this.$route.path !== '/auth' && this.$route.path !== '/callback') {
+            // Remove auth flag
+            localStorage.removeItem('isAuthenticated');
+            
+            // Redirect to auth page
+            this.$router.push('/auth');
+          }
+        }
+      });
+    } else {
+      // Standard web app flow - check localStorage and cookies
+      const isAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
+      
+      if (isAuthenticated) {
+        // Verify with the server that the session is still valid
+        fetch('http://localhost:3000/auth/user', {
+          method: 'GET',
+          credentials: 'include' // This sends the cookies
+        })
+          .then(response => response.json())
+          .then(data => {
+            if (data.user) {
+              console.log('Already authenticated in web app', data.user);
+              
+              // Redirect to dashboard if we're on the auth page
+              if (this.$route.path === '/' || this.$route.path === '/auth') {
+                this.$router.push('/dashboard');
+              }
+            } else {
+              console.log('Session expired in web app');
+              localStorage.removeItem('isAuthenticated');
+              
+              // If not on auth page, redirect to auth
+              if (this.$route.path !== '/' && this.$route.path !== '/auth' && this.$route.path !== '/callback') {
+                this.$router.push('/auth');
+              }
+            }
+          })
+          .catch(error => {
+            console.error('Error checking auth state:', error);
+            localStorage.removeItem('isAuthenticated');
+            
+            // If not on auth page, redirect to auth
+            if (this.$route.path !== '/' && this.$route.path !== '/auth' && this.$route.path !== '/callback') {
+              this.$router.push('/auth');
+            }
+          });
+      } else if (this.$route.path !== '/' && this.$route.path !== '/auth' && this.$route.path !== '/callback') {
+        // Not authenticated and not on auth page, redirect to auth
+        this.$router.push('/auth');
+      }
+    }
+  }
 }
 </script>
 

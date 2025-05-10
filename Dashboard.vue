@@ -23,6 +23,7 @@
 import { ref, onMounted } from 'vue';
 import Logo from './components/Logo.vue';
 import { refreshUser, logout } from './lib/auth';
+import { useRouter } from 'vue-router';
 
 export default {
   name: 'Dashboard',
@@ -31,20 +32,52 @@ export default {
   },
   setup() {
     const user = ref(null);
+    const router = useRouter();
     
     onMounted(async () => {
-      const currentUser = await refreshUser();
-      user.value = currentUser;
-      
-      // Redirect to login if not authenticated
-      if (!currentUser) {
-        window.location.href = '/';
+      try {
+        const currentUser = await refreshUser();
+        user.value = currentUser;
+        
+        // Redirect to login if not authenticated
+        if (!currentUser) {
+          router.push('/');
+        }
+      } catch (error) {
+        console.error('Error fetching user data:', error);
+        router.push('/');
       }
     });
     
     const handleLogout = async () => {
-      await logout();
-      window.location.href = '/';
+      try {
+        await logout();
+        
+        // Clear the authentication flag from localStorage
+        localStorage.removeItem('isAuthenticated');
+        
+        // Also clear chrome.storage for extension context
+        if (typeof chrome !== 'undefined' && chrome.runtime && chrome.storage) {
+          chrome.storage.local.remove(['isAuthenticated'], function() {
+            console.log('Authentication state cleared from chrome.storage');
+          });
+        }
+        
+        // Use router for navigation instead of window.location
+        router.push('/');
+      } catch (error) {
+        console.error('Error during logout:', error);
+        
+        // Even if there's an error, still try to clear storage and redirect
+        localStorage.removeItem('isAuthenticated');
+        
+        // Also clear chrome.storage for extension context
+        if (typeof chrome !== 'undefined' && chrome.runtime && chrome.storage) {
+          chrome.storage.local.remove(['isAuthenticated']);
+        }
+        
+        router.push('/');
+      }
     };
     
     return {

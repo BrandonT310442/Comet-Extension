@@ -210,69 +210,51 @@ export default {
   methods: {
     async checkAuthState() {
       try {
-        const isAuthenticated = localStorage.getItem('isAuthenticated');
+        // Only verify with the server using cookies
+        const response = await fetch('http://localhost:3000/auth/user', {
+          method: 'GET',
+          credentials: 'include' // This sends the cookies
+        })
         
-        if (isAuthenticated !== 'true') {
+        const data = await response.json()
+        
+        if (!data.user) {
           // Redirect to auth page if not authenticated
-          this.$router.push('/auth');
-        } else {
-          // Try to get user info from localStorage or server
-          const storedUserName = localStorage.getItem('userName');
-          const storedUserEmail = localStorage.getItem('userEmail');
-          
-          if (storedUserName) {
-            this.userName = storedUserName;
-          }
-          
-          if (storedUserEmail) {
-            this.userEmail = storedUserEmail;
-          }
-          
-          // If we're in a Chrome extension context, try to get user data from chrome.storage
-          if (typeof chrome !== 'undefined' && chrome.runtime && chrome.storage) {
-            chrome.storage.local.get(['userName', 'userEmail'], (result) => {
-              if (result.userName) {
-                this.userName = result.userName;
-              }
-              if (result.userEmail) {
-                this.userEmail = result.userEmail;
-              }
-            });
-          }
-          
-          // As a fallback, try to fetch user data from the server
-          try {
-            const response = await fetch('http://localhost:3000/auth/user', {
-              method: 'GET',
-              credentials: 'include' // This sends the cookies
-            });
-            
-            const data = await response.json();
-            
-            if (data.user) {
-              this.userName = data.user.name || data.user.displayName || this.userName;
-              this.userEmail = data.user.email || this.userEmail;
-              
-              // Store for future use
-              localStorage.setItem('userName', this.userName);
-              localStorage.setItem('userEmail', this.userEmail);
-              
-              if (typeof chrome !== 'undefined' && chrome.runtime && chrome.storage) {
-                chrome.storage.local.set({
-                  'userName': this.userName,
-                  'userEmail': this.userEmail
-                });
-              }
-            }
-          } catch (serverError) {
-            console.error('Error fetching user data from server:', serverError);
-            // Continue with locally stored data if available
-          }
+          this.$router.push('/auth')
+          return
+        }
+        
+        // Set user data from server response
+        this.userName = data.user.name || data.user.displayName || 'User'
+        this.userEmail = data.user.email || ''
+        
+        // If in Chrome extension context, update chrome.storage
+        if (typeof chrome !== 'undefined' && chrome.runtime && chrome.storage) {
+          chrome.storage.local.set({
+            'userName': this.userName,
+            'userEmail': this.userEmail
+          })
         }
       } catch (error) {
-        console.error('Error checking auth state:', error);
-        this.$router.push('/auth');
+        console.error('Error checking auth state:', error)
+        this.$router.push('/auth')
       }
+    },
+    
+    logout() {
+      // Make a request to logout endpoint to clear cookies
+      fetch('http://localhost:3000/auth/logout', {
+        method: 'POST',
+        credentials: 'include'
+      }).finally(() => {
+        // If in Chrome extension context, clear chrome.storage
+        if (typeof chrome !== 'undefined' && chrome.runtime && chrome.storage) {
+          chrome.storage.local.remove(['userName', 'userEmail'])
+        }
+        
+        // Redirect to auth page
+        this.$router.push('/auth')
+      })
     },
     toggleSidebar() {
       this.sidebarCollapsed = !this.sidebarCollapsed;
@@ -464,21 +446,31 @@ export default {
       console.log('Edit profile clicked');
       this.showUserMenu = false;
     },
-    logout() {
-      // Remove all authentication data from localStorage
-      localStorage.removeItem('isAuthenticated');
-      localStorage.removeItem('userName');
-      localStorage.removeItem('userEmail');
-      
-      // If in Chrome extension context, also clear chrome.storage
-      if (typeof chrome !== 'undefined' && chrome.runtime && chrome.storage) {
-        chrome.storage.local.remove(['isAuthenticated', 'userName', 'userEmail'], () => {
-          console.log('Chrome storage cleared');
-          // Redirect to auth page after storage is cleared
-          this.$router.push('/auth');
+    async logout() {
+      try {
+        // First, make a request to logout endpoint to clear server-side session
+        await fetch('http://localhost:3000/auth/logout', {
+          method: 'POST',
+          credentials: 'include' // Important for cookies
         });
-      } else {
+
+        // Remove all authentication data from localStorage
+        localStorage.removeItem('isAuthenticated');
+        localStorage.removeItem('userName');
+        localStorage.removeItem('userEmail');
+        
+        // If in Chrome extension context, also clear chrome.storage
+        if (typeof chrome !== 'undefined' && chrome.runtime && chrome.storage) {
+          chrome.storage.local.remove(['isAuthenticated', 'userName', 'userEmail'], () => {
+            console.log('Chrome storage cleared');
+          });
+        }
+
         // Redirect to auth page
+        this.$router.push('/auth');
+      } catch (error) {
+        console.error('Error during logout:', error);
+        // Still redirect to auth page even if there's an error
         this.$router.push('/auth');
       }
     }

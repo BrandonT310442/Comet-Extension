@@ -125,54 +125,27 @@ export default {
   methods: {
     async checkAuthState() {
       try {
-        // Check if we have an authentication token in localStorage
-        const isAuthenticated = localStorage.getItem('isAuthenticated')
+        // Only verify with the server using cookies
+        const response = await fetch('http://localhost:3000/auth/user', {
+          method: 'GET',
+          credentials: 'include' // This sends the cookies
+        })
         
-        if (isAuthenticated === 'true') {
-          // Verify with the server that the session is still valid
-          const response = await fetch('http://localhost:3000/auth/user', {
-            method: 'GET',
-            credentials: 'include' // This sends the cookies
-          })
-          
-          const data = await response.json()
-          
-          if (data.user) {
-            // Only store minimal non-sensitive data in memory
-            this.user = {
-              id: data.user.id,
-              email: data.user.email,
-              name: data.user.name || ''
-            }
-            
-            // Redirect to dashboard (which is now the root path)
-            this.$router.push('/')
-          } else {
-            // If the session is invalid, clear the localStorage
-            localStorage.removeItem('isAuthenticated')
+        const data = await response.json()
+        
+        if (data.user) {
+          // Only store minimal non-sensitive data in memory
+          this.user = {
+            id: data.user.id,
+            email: data.user.email,
+            name: data.user.name || ''
           }
+          
+          // Redirect to dashboard
+          this.$router.push('/')
         }
       } catch (error) {
         console.error('Error checking auth state:', error)
-        localStorage.removeItem('isAuthenticated')
-      }
-    },
-    async handleSubmit() {
-      this.loading = true
-      this.errorMsg = ''
-      try {
-        if (this.isLogin) {
-          await this.handleLogin()
-        } else {
-          if (this.form.password !== this.form.confirmPassword) {
-            throw new Error('Passwords do not match. Please try again.')
-          }
-          await this.handleSignup()
-        }
-      } catch (error) {
-        this.errorMsg = error.message || 'An error occurred during authentication'
-      } finally {
-        this.loading = false
       }
     },
     async handleLogin() {
@@ -193,7 +166,7 @@ export default {
           headers: {
             'Content-Type': 'application/json'
           },
-          credentials: 'include', // Important for cookies to be stored
+          credentials: 'include',
           body: JSON.stringify({
             email: this.form.email,
             password: this.form.password
@@ -206,14 +179,7 @@ export default {
           throw new Error(data.error || 'Failed to log in')
         }
           
-        console.log('Login successful, redirecting to dashboard');
-        
-        // Set a flag in localStorage to indicate the user is authenticated
-        localStorage.setItem('isAuthenticated', 'true')
-        
-        // Store user data in localStorage for persistence
-        if (data.user.name) localStorage.setItem('userName', data.user.name);
-        if (data.user.email) localStorage.setItem('userEmail', data.user.email);
+        console.log('Login successful, redirecting to dashboard')
         
         // Store minimal non-sensitive data in memory
         this.user = {
@@ -222,24 +188,37 @@ export default {
           name: data.user.name || ''
         }
         
-        // For Chrome extension, use storage.local as well
+        // For Chrome extension, use storage.local
         if (typeof chrome !== 'undefined' && chrome.runtime && chrome.storage) {
           chrome.storage.local.set({ 
-            'isAuthenticated': true,
             'userName': data.user.name || '',
             'userEmail': data.user.email || ''
-          }, function() {
-            console.log('Authentication state and user data saved in chrome.storage');
-          });
+          })
         }
         
-        // Redirect to dashboard - use a slight delay to ensure storage is set
-        setTimeout(() => {
-          this.$router.push('/');
-        }, 100);
+        // Redirect to dashboard
+        this.$router.push('/')
       } catch (error) {
         console.error('Login error:', error)
         throw error
+      }
+    },
+    async handleSubmit() {
+      this.loading = true
+      this.errorMsg = ''
+      try {
+        if (this.isLogin) {
+          await this.handleLogin()
+        } else {
+          if (this.form.password !== this.form.confirmPassword) {
+            throw new Error('Passwords do not match. Please try again.')
+          }
+          await this.handleSignup()
+        }
+      } catch (error) {
+        this.errorMsg = error.message || 'An error occurred during authentication'
+      } finally {
+        this.loading = false
       }
     },
     async handleSignup() {
@@ -563,4 +542,4 @@ export default {
   padding: 0;
   margin-left: 0.5rem;
 }
-</style> 
+</style>

@@ -282,4 +282,26 @@ router.post('/oauth-callback', async (req, res) => {
   }
 });
 
-export default router; 
+// Get user data endpoint
+router.get('/user-data', authenticateToken, async (req, res) => {
+  try {
+    const { data: { user }, error } = await supabase.auth.getUser(req.user.access_token);
+    
+    if (error || !user) {
+      return res.status(401).json({ error: 'Failed to get user data' });
+    }
+    
+    return res.status(200).json({
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.user_metadata?.name || '',
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching user data:', error);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+export default router;

@@ -1,14 +1,8 @@
 <template>
   <div class="logo">
     <router-link to="/" class="logo-link">
-      <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path
-          d="M17 17C17 13.6863 19.2386 10.9543 22.3755 9.71663C22.2425 9.71301 22.1099 9.71117 21.9769 9.71117C16.7228 9.71117 12.3547 14.0793 12.3547 19.3334C12.3547 24.5874 16.7228 28.9556 21.9769 28.9556C26.2021 28.9556 29.8217 26.1832 30.9175 22.3547C28.8656 23.4735 26.5543 24 24.1231 24C20.2645 24 17.0001 20.7355 17 17Z"
-          fill="#6366f1"
-          class="moon"
-        />
-      </svg>
-      <span v-if="showText">Eclipse</span>
+      <img src="/Logo.png" alt="Comet Logo" width="40" height="40" class="logo-image" />
+      <span v-if="showText">Comet</span>
     </router-link>
   </div>
 </template>
@@ -36,13 +30,11 @@ export default {
     text-decoration: none;
     transition: all 0.3s ease;
     
-    svg {
+    .logo-image {
       transition: all 0.3s ease;
       filter: drop-shadow(0 0 8px rgba(99, 102, 241, 0.2));
-      .moon {
-        animation: float 3s ease-in-out infinite;
-        transition: filter 0.3s ease;
-      }
+      position: relative;
+      top: -2px; /* Raise the logo up a bit */
     }
     
     span {
@@ -54,11 +46,9 @@ export default {
     
     &:hover {
       transform: scale(1.05);
-      svg {
+      .logo-image {
         filter: drop-shadow(0 0 12px rgba(99, 102, 241, 0.4));
-        .moon {
-          filter: brightness(1.2);
-        }
+        filter: brightness(1.2);
       }
       span {
         color: #4f46e5;
@@ -75,4 +65,4 @@ export default {
     transform: translateY(-2px);
   }
 }
-</style> 
+</style>

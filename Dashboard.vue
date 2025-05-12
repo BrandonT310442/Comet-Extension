@@ -193,12 +193,16 @@ export default {
           description: 'Deepseek V3 Model',
         }
       ],
-      currentModel: 'deepseek-chat'
+      currentModel: 'deepseek-chat',
+      systemPrompt: '' 
     }
   },
   created() {
     // Check if user is authenticated
     this.checkAuthState();
+    
+    // Load system prompt
+    this.loadSystemPrompt();
   },
   mounted() {
     // Listen for clicks outside dropdown
@@ -298,6 +302,20 @@ export default {
         this.messages = []; // Would be loaded from API
       }
     },
+    // Add this new method
+    async loadSystemPrompt() {
+      try {
+        const response = await fetch('/System Prompt.txt');
+        this.systemPrompt = await response.text();
+        console.log('System prompt loaded successfully');
+      } catch (error) {
+        console.error('Error loading system prompt:', error);
+        // Fallback system prompt in case the file can't be loaded
+        this.systemPrompt = `You are Comet, a powerful AI assistant for LaTeX and Overleaf, designed to help users write, edit, and debug documents with precision.`;
+      }
+    },
+    
+    // Modify the sendMessage method to include the system prompt
     async sendMessage() {
       const message = this.userInput.trim();
       if (!message || this.isTyping) return;
@@ -323,12 +341,25 @@ export default {
       
       try {
         // Prepare conversation history for the API
-        const conversationHistory = this.messages.map(msg => ({
-          role: msg.role,
-          content: msg.content
-        }));
+        const conversationHistory = [];
         
-        // Call DeepSeek API through Operouter
+        // Add system prompt as the first message
+        if (this.systemPrompt) {
+          conversationHistory.push({
+            role: 'system',
+            content: this.systemPrompt
+          });
+        }
+        
+        // Add conversation history
+        this.messages.forEach(msg => {
+          conversationHistory.push({
+            role: msg.role,
+            content: msg.content
+          });
+        });
+        
+        // Call DeepSeek API through Openrouter
         const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
           method: 'POST',
           headers: {
@@ -410,9 +441,76 @@ export default {
       });
     },
     formatMessage(message) {
-      // Simple formatting - in a real app you would use markdown or other rich formatting
-      return message.replace(/\n/g, '<br>');
+      // First, escape HTML to prevent XSS
+      let escapedMessage = message
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+      
+      // Process LaTeX code blocks marked with **Latex Code**
+      escapedMessage = escapedMessage.replace(/\*\*Latex Code\*\*\s*\n([\s\S]*?)(?=\n\*\*Latex Code\*\*|\n\s*$|$)/g, (match, code) => {
+        // Generate a unique ID for this code block
+        const blockId = 'latex-' + Math.random().toString(36).substring(2, 9);
+        
+        // Apply syntax highlighting to LaTeX code
+        const highlightedCode = this.highlightLatexSyntax(code);
+        
+        return `
+          <div class="latex-code-block">
+            <div class="latex-code-header">
+              <span>LaTeX Code</span>
+              <button class="copy-button" data-code="${this.escapeForHtmlAttribute(code)}" onclick="
+                const codeText = this.getAttribute('data-code');
+                navigator.clipboard.writeText(codeText)
+                  .then(() => {
+                    this.textContent = 'Copied!';
+                    setTimeout(() => { this.textContent = 'Copy'; }, 2000);
+                  })
+                  .catch(err => {
+                    console.error('Could not copy text: ', err);
+                    this.textContent = 'Error!';
+                    setTimeout(() => { this.textContent = 'Copy'; }, 2000);
+                  });
+              ">Copy</button>
+            </div>
+            <pre class="latex-code-content">${highlightedCode}</pre>
+          </div>
+        `;
+      });
+      
+      // Convert line breaks to <br> tags
+      return escapedMessage.replace(/\n/g, '<br>');
     },
+    
+    // Add this helper method to escape code for HTML attributes
+    escapeForHtmlAttribute(text) {
+      return text
+        .replace(/&/g, '&amp;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+    },
+    
+    // Add this new method for LaTeX syntax highlighting
+    highlightLatexSyntax(code) {
+      // Replace LaTeX commands with highlighted versions
+      return code
+        // Highlight commands (starting with \)
+        .replace(/\\([a-zA-Z]+)(\{[^{}]*\})?/g, '<span class="latex-command">\\$1</span>$2')
+        // Highlight math delimiters
+        .replace(/(\$\$|\$)(.*?)(\$\$|\$)/g, '<span class="latex-math">$1$2$3</span>')
+        // Highlight environments
+        .replace(/(\\begin\{)([^{}]*?)(\})/g, '<span class="latex-env">$1</span><span class="latex-env-name">$2</span><span class="latex-env">$3</span>')
+        .replace(/(\\end\{)([^{}]*?)(\})/g, '<span class="latex-env">$1</span><span class="latex-env-name">$2</span><span class="latex-env">$3</span>')
+        // Highlight comments
+        .replace(/(%.*$)/gm, '<span class="latex-comment">$1</span>')
+        // Highlight brackets
+        .replace(/(\{|\})/g, '<span class="latex-bracket">$1</span>');
+    },
+    
     formatDate(date) {
       // Format date as "May 10" or "Yesterday" or "Today"
       const now = new Date();

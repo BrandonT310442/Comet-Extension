@@ -588,3 +588,110 @@
   font-size: 0.8rem;
   color: #9ca3af;
 }
+
+/* LaTeX Code Block Styling */
+.latex-code-block {
+  margin: 1rem 0;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid #e0e0e0;
+  background-color: #f8f9fa;
+  font-family: 'Courier New', monospace;
+}
+
+.latex-code-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background-color: #f1f3f5;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.latex-code-header span {
+  font-weight: 600;
+  color: #333;
+  font-size: 0.9rem;
+}
+
+.copy-button {
+  background-color: #4a6cf7;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 4px 10px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.copy-button:hover {
+  background-color: #3a5ce5;
+}
+
+.latex-code-content {
+  margin: 0;
+  padding: 12px;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: #333;
+}
+
+/* LaTeX Syntax Highlighting - Updated to match app theme */
+.latex-command {
+  color: #6366f1; /* Primary app color (purple) */
+  font-weight: bold;
+}
+
+.latex-math {
+  color: #ec4899; /* Pink - for math expressions */
+}
+
+.latex-env {
+  color: #8b5cf6; /* Purple variant - for environment tags */
+  font-weight: bold;
+}
+
+.latex-env-name {
+  color: #f59e0b; /* Amber - for environment names */
+  font-weight: bold;
+}
+
+.latex-comment {
+  color: #6b7280; /* Gray - for comments */
+  font-style: italic;
+}
+
+.latex-bracket {
+  color: #10b981; /* Emerald - for brackets */
+  font-weight: bold;
+}
+/* Add this to your dashboard.css file */
+/* Message Animation */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.message-container {
+  animation: fadeIn 0.3s ease-out;
+  display: flex;
+  padding: 1rem 1.5rem;
+  gap: 1rem;
+  
+  &.user {
+    background: #fff;
+  }
+  
+  &.assistant {
+    background: #f8fafc;
+  }
+}

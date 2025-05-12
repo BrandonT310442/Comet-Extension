@@ -21,6 +21,17 @@ export default defineConfig({
           fileName: 'background.js',
           source: fs.readFileSync('background.js', 'utf-8')
         })
+        this.emitFile({
+          type: 'asset',
+          fileName: 'background.js',
+          source: fs.readFileSync('background.js', 'utf-8')
+        })
+
+        this.emitFile({
+          type: 'asset',
+          fileName: 'System Prompt.txt',
+          source: fs.readFileSync('System Prompt.txt', 'utf-8')
+        })
         
         // Copy icon files
         const iconDir = 'icons';

@@ -24,11 +24,25 @@
         document.documentElement.style.height = '600px';
       })();
     </script>
-    <script type="module" crossorigin src="/assets/main-d9d4e4ef.js"></script>
-    <link rel="stylesheet" href="/assets/index-ddb09655.css">
+    <script type="module" crossorigin src="/assets/main-a34e9680.js"></script>
+    <link rel="stylesheet" href="/assets/index-b0e1bb8b.css">
   </head>
   <body>
     <div id="app"></div>
+    <script>
+      window.MathJax = {
+        tex: {
+          inlineMath: [['$', '$'], ['\\(', '\\)']],
+          displayMath: [['$$', '$$'], ['\\[', '\\]']],
+          processEscapes: true,
+          processEnvironments: true
+        },
+        options: {
+          skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre']
+        }
+      };
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     
     
     <!-- Fix for extension height issue when reopening -->

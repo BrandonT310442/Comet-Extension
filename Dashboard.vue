@@ -207,6 +207,9 @@ export default {
   mounted() {
     // Listen for clicks outside dropdown
     document.addEventListener('click', this.handleOutsideClick);
+    
+    // Load MathJax
+    this.loadMathJax();
   },
   beforeUnmount() {
     document.removeEventListener('click', this.handleOutsideClick);
@@ -242,6 +245,37 @@ export default {
       } catch (error) {
         console.error('Error checking auth state:', error)
         this.$router.push('/auth')
+      }
+    },
+    loadMathJax() {
+      // Create a script element for MathJax
+      const script = document.createElement('script');
+      script.src = 'https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js';
+      script.async = true;
+      
+      // Configure MathJax
+      window.MathJax = {
+        tex: {
+          inlineMath: [['\\(', '\\)']],
+          displayMath: [['\\[', '\\]']]
+        },
+        startup: {
+          pageReady: () => {
+            console.log('MathJax is ready');
+          }
+        }
+      };
+      
+      // Append the script to the document
+      document.head.appendChild(script);
+    },
+    
+    // Add a method to process math after a message is added
+    processMathInMessages() {
+      // If MathJax is loaded, typeset the math
+      if (window.MathJax && window.MathJax.typesetPromise) {
+        window.MathJax.typesetPromise()
+          .catch((err) => console.error('MathJax typesetting failed: ', err));
       }
     },
     
@@ -385,6 +419,10 @@ export default {
           timestamp: new Date()
         });
         
+        // Process math in messages
+        this.$nextTick(() => {
+          this.processMathInMessages();
+        });
       } catch (error) {
         console.error('Error calling DeepSeek API:', error);
         
@@ -449,19 +487,27 @@ export default {
         .replace(/"/g, '&quot;')
         .replace(/'/g, '&#039;');
       
-      // Process LaTeX code blocks marked with **Latex Code**
-      escapedMessage = escapedMessage.replace(/\*\*Latex Code\*\*\s*\n([\s\S]*?)(?=\n\*\*Latex Code\*\*|\n\s*$|$)/g, (match, code) => {
-        // Generate a unique ID for this code block
+      // Split the message at "**Latex Code**" marker
+      const parts = escapedMessage.split('**Latex Code**');
+      
+      // Process math expressions only in the part before the marker
+      if (parts.length > 1) {
+        // Process math in the text part (before the marker)
+        parts[0] = parts[0]
+          .replace(/\\\((.*?)\\\)/g, '<span class="math-inline">\\($1\\)</span>')
+          .replace(/\\\[(.*?)\\\]/g, '<span class="math-display">\\[$1\\]</span>');
+        
+        // Create the LaTeX code block for the part after the marker
+        const latexCode = parts[1].trim();
         const blockId = 'latex-' + Math.random().toString(36).substring(2, 9);
+        const highlightedCode = this.highlightLatexSyntax(latexCode);
         
-        // Apply syntax highlighting to LaTeX code
-        const highlightedCode = this.highlightLatexSyntax(code);
-        
-        return `
+        // Replace the second part with a formatted code block
+        parts[1] = `
           <div class="latex-code-block">
             <div class="latex-code-header">
               <span>LaTeX Code</span>
-              <button class="copy-button" data-code="${this.escapeForHtmlAttribute(code)}" onclick="
+              <button class="copy-button" data-code="${this.escapeForHtmlAttribute(latexCode)}" onclick="
                 const codeText = this.getAttribute('data-code');
                 navigator.clipboard.writeText(codeText)
                   .then(() => {
@@ -478,7 +524,15 @@ export default {
             <pre class="latex-code-content">${highlightedCode}</pre>
           </div>
         `;
-      });
+        
+        // Rejoin the parts
+        escapedMessage = parts.join('');
+      } else {
+        // If no marker, process all math expressions
+        escapedMessage = escapedMessage
+          .replace(/\\\((.*?)\\\)/g, '<span class="math-inline">\\($1\\)</span>')
+          .replace(/\\\[(.*?)\\\]/g, '<span class="math-display">\\[$1\\]</span>');
+      }
       
       // Convert line breaks to <br> tags
       return escapedMessage.replace(/\n/g, '<br>');
@@ -579,3 +633,33 @@ export default {
 <style lang="scss" scoped>
 /* CSS moved to dashboard.css */
 </style>
+
+// Create a script element for MathJax
+const script = document.createElement('script');
+script.src = 'https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js';
+script.async = true;
+
+// Configure MathJax
+window.MathJax = {
+  tex: {
+    inlineMath: [['\\(', '\\)']],
+    displayMath: [['\\[', '\\]']]
+  },
+  startup: {
+    pageReady: () => {
+      console.log('MathJax is ready');
+    }
+  }
+};
+
+// Append the script to the document
+document.head.appendChild(script);
+
+// Add a method to process math after a message is added
+processMathInMessages() {
+  // If MathJax is loaded, typeset the math
+  if (window.MathJax && window.MathJax.typesetPromise) {
+    window.MathJax.typesetPromise()
+      .catch((err) => console.error('MathJax typesetting failed: ', err));
+  }
+}

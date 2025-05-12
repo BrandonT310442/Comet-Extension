@@ -695,3 +695,15 @@
     background: #f8fafc;
   }
 }
+
+/* Math rendering styles */
+.math-inline {
+  display: inline-block;
+  margin: 0 0.1em;
+}
+
+.math-display {
+  display: block;
+  margin: 1em 0;
+  text-align: center;
+}

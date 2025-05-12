@@ -32,7 +32,12 @@ export default defineConfig({
           fileName: 'System Prompt.txt',
           source: fs.readFileSync('System Prompt.txt', 'utf-8')
         })
-        
+
+        this.emitFile({
+          type: 'asset',
+          fileName: 'mathjax.js',
+          source: fs.readFileSync('mathjax.js')
+        })
         // Copy icon files
         const iconDir = 'icons';
         if (!fs.existsSync(path.join('public', iconDir))) {

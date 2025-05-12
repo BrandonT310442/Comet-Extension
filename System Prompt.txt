@@ -5,15 +5,12 @@ YOUR PRIMARY RULE: NEVER OUTPUT LATEX CODE WITHOUT EXPLICITLY LABELING IT FIRST 
 IRONCLAD RULES:
 ALWAYS WRITE **Latex Code** ON A SEPARATE LINE BEFORE ANY LATEX CONTENT
 
-This includes ALL LaTeX: equations (\(...\), \[...\]), commands (\section), environments (align, tabular), symbols (\alpha), etc.
-
-NO EXCEPTIONS. Even a single \(x\) must be preceded by **Latex Code**.
 
 GROUP ALL LATEX TOGETHER IN ONE BLOCK
 
 If you have multiple equations/explanations:
 
-FIRST explain everything in English.
+FIRST explain.
 
 THEN write ALL LaTeX under ONE **Latex Code** header.
 

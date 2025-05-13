@@ -313,7 +313,6 @@ export default {
       } catch (error) {
         console.error('Error loading system prompt:', error);
         // Fallback system prompt in case the file can't be loaded
-        this.systemPrompt = `You are Comet, a powerful AI assistant for LaTeX and Overleaf, designed to help users write, edit, and debug documents with precision.`;
       }
     },
     
@@ -388,9 +387,7 @@ export default {
         });
         
         // Process math in messages
-        this.$nextTick(() => {
-          this.processMathInMessages();
-        });
+      
       } catch (error) {
         console.error('Error calling DeepSeek API:', error);
         
@@ -447,94 +444,142 @@ export default {
       });
     },
     formatMessage(message) {
-      // First, escape HTML to prevent XSS
-      let escapedMessage = message
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#039;');
+      // First, extract all math expressions and replace with placeholders
+      const mathExpressions = [];
+      let processedMessage = message;
+      
+      // Extract inline math expressions
+      processedMessage = processedMessage.replace(/\\\((.*?)\\\)/g, (match, p1) => {
+        const placeholder = `__INLINE_MATH_${mathExpressions.length}__`;
+        mathExpressions.push({
+          type: 'inline',
+          content: p1,
+          placeholder
+        });
+        return placeholder;
+      });
+      
+      // Extract block math expressions
+      processedMessage = processedMessage.replace(/\\\[([\s\S]*?)\\\]/g, (match, p1) => {
+        const placeholder = `__BLOCK_MATH_${mathExpressions.length}__`;
+        mathExpressions.push({
+          type: 'block',
+          content: p1.trim(),
+          placeholder
+        });
+        return placeholder;
+      });
       
       // Split the message at "**Latex Code**" marker
-      const parts = escapedMessage.split('**Latex Code**');
+      const parts = processedMessage.split('**Latex Code**');
       
-      // Process math expressions only in the part before the marker
+      // Now escape HTML in the text (with placeholders)
       if (parts.length > 1) {
-        // Process math in the text part (before the marker)
+        // Escape HTML in the first part (text)
         parts[0] = parts[0]
-          .replace(/\\\((.*?)\\\)/g, (match, p1) => {
-            try {
-              return katex.renderToString(p1, { displayMode: false });
-            } catch (e) {
-              console.error('KaTeX error:', e);
-              return match;
-            }
-          })
-          .replace(/\\\[(.*?)\\\]/g, (match, p1) => {
-            try {
-              return katex.renderToString(p1, { displayMode: true });
-            } catch (e) {
-              console.error('KaTeX error:', e);
-              return match;
-            }
-          });
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#039;');
         
         // Create the LaTeX code block for the part after the marker
         const latexCode = parts[1].trim();
         const blockId = 'latex-' + Math.random().toString(36).substring(2, 9);
-        const highlightedCode = this.highlightLatexSyntax(latexCode);
+        
+        // Process any math expressions in the LaTeX code before highlighting
+        let processedLatexCode = latexCode;
+        for (const expr of mathExpressions) {
+          // Replace any math placeholders in the LaTeX code section
+          if (processedLatexCode.includes(expr.placeholder)) {
+            processedLatexCode = processedLatexCode.replace(expr.placeholder, 
+              expr.type === 'inline' ? `\\(${expr.content}\\)` : `\\[${expr.content}\\]`);
+          }
+        }
+        
+        const highlightedCode = this.highlightLatexSyntax(this.escapeForHtmlAttribute(processedLatexCode));
         
         // Replace the second part with a formatted code block
         parts[1] = `
           <div class="latex-code-block">
             <div class="latex-code-header">
               <span>LaTeX Code</span>
-              <button class="copy-button" data-code="${this.escapeForHtmlAttribute(latexCode)}" onclick="
-                const codeText = this.getAttribute('data-code');
-                navigator.clipboard.writeText(codeText)
-                  .then(() => {
-                    this.textContent = 'Copied!';
-                    setTimeout(() => { this.textContent = 'Copy'; }, 2000);
-                  })
-                  .catch(err => {
-                    console.error('Could not copy text: ', err);
-                    this.textContent = 'Error!';
-                    setTimeout(() => { this.textContent = 'Copy'; }, 2000);
-                  });
-              ">Copy</button>
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                </svg>
+              </button>
             </div>
             <pre class="latex-code-content">${highlightedCode}</pre>
+             <button class="copy-button" onclick="navigator.clipboard.writeText(document.querySelector('pre.latex-code-content').textContent).then(() => { const btn = this; const originalInnerHTML = btn.innerHTML; btn.innerHTML = '<svg xmlns=&quot;http://www.w3.org/2000/svg&quot; width=&quot;24&quot; height=&quot;24&quot; viewBox=&quot;0 0 24 24&quot; fill=&quot;none&quot; stroke=&quot;currentColor&quot; stroke-width=&quot;2&quot; stroke-linecap=&quot;round&quot; stroke-linejoin=&quot;round&quot;><polyline points=&quot;20 6 9 17 4 12&quot;></polyline></svg>'; setTimeout(() => { btn.innerHTML = originalInnerHTML; }, 2000); })">
+
           </div>
         `;
         
         // Rejoin the parts
-        escapedMessage = parts.join('');
+        processedMessage = parts.join('');
       } else {
-        // If no marker, process all math expressions
-        escapedMessage = escapedMessage
-          .replace(/\\\((.*?)\\\)/g, (match, p1) => {
-            try {
-              return katex.renderToString(p1, { displayMode: false });
-            } catch (e) {
-              console.error('KaTeX error:', e);
-              return match;
-            }
-          })
-          .replace(/\\\[(.*?)\\\]/g, (match, p1) => {
-            try {
-              return katex.renderToString(p1, { displayMode: true });
-            } catch (e) {
-              console.error('KaTeX error:', e);
-              return match;
-            }
+        // If no marker, just escape HTML in the whole message
+        processedMessage = processedMessage
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#039;');
+      }
+      
+      // Now render all math expressions and replace the placeholders
+      for (const expr of mathExpressions) {
+        try {
+          const rendered = katex.renderToString(expr.content, { 
+            displayMode: expr.type === 'block'
           });
+          processedMessage = processedMessage.replace(expr.placeholder, rendered);
+        } catch (e) {
+          console.error('KaTeX error:', e);
+          // If rendering fails, replace with escaped original
+          const escaped = expr.type === 'inline' 
+            ? `\\(${this.escapeForHtmlAttribute(expr.content)}\\)` 
+            : `\\[${this.escapeForHtmlAttribute(expr.content)}\\]`;
+          processedMessage = processedMessage.replace(expr.placeholder, escaped);
+        }
       }
       
       // Convert line breaks to <br> tags
-      return escapedMessage.replace(/\n/g, '<br>');
+      return processedMessage.replace(/\n/g, '<br>');
     },
     
-    // Add this helper method to escape code for HTML attributes
+    // Add a separate method for HTML escaping
+    escapeHtml(text) {
+      // Don't escape content inside KaTeX rendered elements
+      const katexElements = [];
+      let index = 0;
+      
+      // Replace KaTeX elements with placeholders
+      text = text.replace(/<span class="katex(?:[\s\S]*?)<\/span>/g, (match) => {
+        const placeholder = `__KATEX_PLACEHOLDER_${index}__`;
+        katexElements.push(match);
+        index++;
+        return placeholder;
+      });
+      
+      // Escape HTML
+      text = text
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+      
+      // Restore KaTeX elements
+      for (let i = 0; i < katexElements.length; i++) {
+        text = text.replace(`__KATEX_PLACEHOLDER_${i}__`, katexElements[i]);
+      }
+      
+      return text;
+    },
+    
+    // Keep your existing escapeForHtmlAttribute method
     escapeForHtmlAttribute(text) {
       return text
         .replace(/&/g, '&amp;')
@@ -544,7 +589,7 @@ export default {
         .replace(/>/g, '&gt;');
     },
     
-    // Add this new method for LaTeX syntax highlighting
+    // Keep your existing highlightLatexSyntax method
     highlightLatexSyntax(code) {
       // Replace LaTeX commands with highlighted versions
       return code

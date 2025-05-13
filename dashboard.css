@@ -1,3 +1,5 @@
+@import url('https://cdn.jsdelivr.net/npm/computer-modern-font@1.0.1/index.css');
+
 /* Dashboard Styles */
 .chat-container {
   display: flex;
@@ -592,51 +594,72 @@
 /* LaTeX Code Block Styling */
 .latex-code-block {
   margin: 1rem 0;
-  border-radius: 8px;
+  border-radius: 12px;
   overflow: hidden;
-  border: 1px solid #e0e0e0;
-  background-color: #f8f9fa;
-  font-family: 'Courier New', monospace;
+  border: 1px solid rgba(224, 224, 224, 0.5);
+  background-color: rgba(248, 249, 250, 0.7);
+  backdrop-filter: blur(5px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+}
+
+.latex-code-block:hover {
+  box-shadow: 0 6px 16px rgba(99, 102, 241, 0.1);
+  border-color: rgba(99, 102, 241, 0.3);
 }
 
 .latex-code-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 8px 12px;
-  background-color: #f1f3f5;
-  border-bottom: 1px solid #e0e0e0;
+  padding: 12px 16px;
+  background-color: rgba(241, 243, 245, 0.7);
+  backdrop-filter: blur(5px);
+  border-bottom: 1px solid rgba(224, 224, 224, 0.5);
 }
 
 .latex-code-header span {
   font-weight: 600;
   color: #333;
-  font-size: 0.9rem;
+  font-size: 0.95rem;
 }
 
 .copy-button {
-  background-color: #4a6cf7;
-  color: white;
+  background: none;
   border: none;
-  border-radius: 4px;
-  padding: 4px 10px;
-  font-size: 0.8rem;
+  color: #6366f1;
   cursor: pointer;
-  transition: background-color 0.2s;
+  padding: 6px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
 }
 
 .copy-button:hover {
-  background-color: #3a5ce5;
+  background-color: rgba(99, 102, 241, 0.1);
+  transform: translateY(-1px);
+}
+
+.copy-button:active {
+  transform: translateY(1px);
+}
+
+.copy-button svg {
+  width: 18px;
+  height: 18px;
 }
 
 .latex-code-content {
   margin: 0;
-  padding: 12px;
+  padding: 16px;
   overflow-x: auto;
   white-space: pre-wrap;
-  font-size: 0.9rem;
-  line-height: 1.5;
+  font-size: 0.95rem;
+  line-height: 1.6;
   color: #333;
+  background-color: rgba(255, 255, 255, 0.5);
 }
 
 /* LaTeX Syntax Highlighting - Updated to match app theme */

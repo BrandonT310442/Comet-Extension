@@ -215,10 +215,14 @@ export default {
     
     // Add global event listener for copy buttons
     document.addEventListener('click', this.handleCopyButtonClick);
+    
+    // Add global event listener for apply buttons
+    document.addEventListener('click', this.handleApplyButtonClick);
   },
   beforeUnmount() {
     document.removeEventListener('click', this.handleOutsideClick);
     document.removeEventListener('click', this.handleCopyButtonClick);
+    document.removeEventListener('click', this.handleApplyButtonClick);
   },
   methods: {
     async checkAuthState() {
@@ -278,6 +282,25 @@ export default {
       });
     },
 
+    handleApplyButtonClick(event) {
+      console.log("test")
+      // Check if the clicked element or its parent is an apply button
+      const button = event.target.closest('[data-action="apply-latex"]');
+      if (!button) return;
+      
+      // Find the closest parent latex-code-block
+      const codeBlock = button.closest('.latex-code-block');
+      if (!codeBlock) return;
+      
+      // Get the text content from the pre element
+      const latexCode = codeBlock.querySelector('pre.latex-code-content').textContent;
+      
+      // Send message to Chrome extension
+      chrome.runtime.sendMessage({
+        action: 'applyLatexToOverleaf',
+        latexCode: latexCode
+      });
+    },
     animateTyping() {
       // Clear any existing timeout
       if (this.typingTimeout) {
@@ -569,11 +592,16 @@ export default {
           <div class="latex-code-block">
             <div class="latex-code-header">
               <span>LaTeX Code</span>
+              <div class="code-actions">
+                <button class="apply-button" data-action="apply-latex">
+                  <span>Apply</span>
+                </button>
+                <button class="copy-button" data-action="copy-latex">
+                  <img src="copy.png" alt="Copy" width="18" height="18" style="display: block;" />
+                </button>
+              </div>
             </div>
             <pre class="latex-code-content">${highlightedCode}</pre>
-            <button class="copy-button" data-action="copy-latex">
-              <img src="copy.png" alt="Copy" width="18" height="18" style="display: block;" />
-            </button>
           </div>
         `;
         

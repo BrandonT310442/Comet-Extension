@@ -47,6 +47,7 @@
           <p>We've sent a verification email to <strong>{{ form.email }}</strong>.</p>
           <p>Please check your inbox and click the verification link to complete your registration.</p>
           <p class="verification-note">If you don't see the email, check your spam folder.</p>
+          <button class="return-btn" @click="showVerificationDialog = false">Return to Login</button>
         </div>
       </div>
       
@@ -510,5 +511,24 @@ export default {
   color: #9ca3af;
   padding: 0;
   margin-left: 0.5rem;
+}
+
+/* Return to login button */
+.return-btn {
+  background: #f1f5fe;
+  color: #3730a3;
+  border: 1px solid #6366f1;
+  border-radius: 0.75rem;
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 500;
+  margin-top: 1.5rem;
+  cursor: pointer;
+  transition: background 0.2s, box-shadow 0.2s;
+}
+
+.return-btn:hover {
+  background: #e0e7ff;
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.12);
 }
 </style>

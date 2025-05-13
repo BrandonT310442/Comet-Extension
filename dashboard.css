@@ -609,6 +609,28 @@
   border-color: rgba(99, 102, 241, 0.3);
 }
 
+.code-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.apply-button {
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  padding: 4px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  transition: background-color 0.2s;
+}
+
+.apply-button:hover {
+  background-color: #45a049;
+}
+
 .latex-code-header {
   display: flex;
   justify-content: space-between;

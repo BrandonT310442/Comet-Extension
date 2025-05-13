@@ -23,8 +23,8 @@ export default defineConfig({
         })
         this.emitFile({
           type: 'asset',
-          fileName: 'background.js',
-          source: fs.readFileSync('background.js', 'utf-8')
+          fileName: 'content.js',
+          source: fs.readFileSync('content.js', 'utf-8')
         })
 
         this.emitFile({

@@ -198,7 +198,7 @@ export default {
       systemPrompt: '',
       typingText: '',
       fullResponseText: '',
-      typingSpeed: 5, // milliseconds per character
+      typingSpeed: 2, // milliseconds per character
       typingTimeout: null
     }
   },
@@ -212,10 +212,13 @@ export default {
   mounted() {
     // Listen for clicks outside dropdown
     document.addEventListener('click', this.handleOutsideClick);
-  
+    
+    // Add global event listener for copy buttons
+    document.addEventListener('click', this.handleCopyButtonClick);
   },
   beforeUnmount() {
     document.removeEventListener('click', this.handleOutsideClick);
+    document.removeEventListener('click', this.handleCopyButtonClick);
   },
   methods: {
     async checkAuthState() {
@@ -249,6 +252,36 @@ export default {
         console.error('Error checking auth state:', error)
         this.$router.push('/auth')
       }
+    },
+
+    handleCopyButtonClick(event) {
+      // Check if the clicked element or its parent is a copy button
+      const button = event.target.closest('[data-action="copy-latex"]');
+      if (!button) return;
+      
+      console.log("Copy button clicked");
+      
+      // Find the closest parent latex-code-block
+      const codeBlock = button.closest('.latex-code-block');
+      if (!codeBlock) return;
+      
+      // Get the text content from the pre element
+      const codeContent = codeBlock.querySelector('pre.latex-code-content').textContent;
+      
+      // Copy to clipboard
+      navigator.clipboard.writeText(codeContent).then(() => {
+        const originalInnerHTML = button.innerHTML;
+        
+        // Show checkmark icon
+        button.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>';
+        
+        // Reset after 2 seconds
+        setTimeout(() => {
+          button.innerHTML = originalInnerHTML;
+        }, 2000);
+      }).catch(err => {
+        console.error('Failed to copy text: ', err);
+      });
     },
 
     animateTyping() {
@@ -485,6 +518,7 @@ export default {
         }
       });
     },
+ 
     formatMessage(message) {
       // First, extract all math expressions and replace with placeholders
       const mathExpressions = [];
@@ -542,13 +576,14 @@ export default {
         const highlightedCode = this.highlightLatexSyntax(this.escapeForHtmlAttribute(processedLatexCode));
         
         // Replace the second part with a formatted code block
+        // Use a data attribute to identify this as a copy button
         parts[1] = `
           <div class="latex-code-block">
             <div class="latex-code-header">
               <span>LaTeX Code</span>
             </div>
             <pre class="latex-code-content">${highlightedCode}</pre>
-            <button class="copy-button" onclick="navigator.clipboard.writeText(document.querySelector('pre.latex-code-content').textContent).then(() => { const btn = this; const originalInnerHTML = btn.innerHTML; btn.innerHTML = '<svg xmlns=&quot;http://www.w3.org/2000/svg&quot; width=&quot;24&quot; height=&quot;24&quot; viewBox=&quot;0 0 24 24&quot; fill=&quot;none&quot; stroke=&quot;currentColor&quot; stroke-width=&quot;2&quot; stroke-linecap=&quot;round&quot; stroke-linejoin=&quot;round&quot;><polyline points=&quot;20 6 9 17 4 12&quot;></polyline></svg>'; setTimeout(() => { btn.innerHTML = originalInnerHTML; }, 2000); })">
+            <button class="copy-button" data-action="copy-latex">
               <img src="copy.png" alt="Copy" width="18" height="18" style="display: block;" />
             </button>
           </div>

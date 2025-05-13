@@ -624,31 +624,29 @@
   font-size: 0.95rem;
 }
 
+/* Copy button styling */
 .copy-button {
-  background: none;
-  border: none;
-  color: #6366f1;
-  cursor: pointer;
-  padding: 6px;
-  border-radius: 4px;
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.2s ease;
+  width: 32px;
+  height: 32px;
+  padding: 4px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: background-color 0.2s;
 }
 
 .copy-button:hover {
-  background-color: rgba(99, 102, 241, 0.1);
-  transform: translateY(-1px);
+  background-color: rgba(0, 0, 0, 0.05);
 }
 
-.copy-button:active {
-  transform: translateY(1px);
-}
-
-.copy-button svg {
-  width: 18px;
-  height: 18px;
+.copy-button img {
+  display: block;
+  width: 20px;
+  height: 20px;
 }
 
 .latex-code-content {

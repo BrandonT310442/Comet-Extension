@@ -511,8 +511,9 @@ export default {
               </button>
             </div>
             <pre class="latex-code-content">${highlightedCode}</pre>
-             <button class="copy-button" onclick="navigator.clipboard.writeText(document.querySelector('pre.latex-code-content').textContent).then(() => { const btn = this; const originalInnerHTML = btn.innerHTML; btn.innerHTML = '<svg xmlns=&quot;http://www.w3.org/2000/svg&quot; width=&quot;24&quot; height=&quot;24&quot; viewBox=&quot;0 0 24 24&quot; fill=&quot;none&quot; stroke=&quot;currentColor&quot; stroke-width=&quot;2&quot; stroke-linecap=&quot;round&quot; stroke-linejoin=&quot;round&quot;><polyline points=&quot;20 6 9 17 4 12&quot;></polyline></svg>'; setTimeout(() => { btn.innerHTML = originalInnerHTML; }, 2000); })">
-
+            <button class="copy-button" onclick="navigator.clipboard.writeText(document.querySelector('pre.latex-code-content').textContent).then(() => { const btn = this; const originalInnerHTML = btn.innerHTML; btn.innerHTML = '<svg xmlns=&quot;http://www.w3.org/2000/svg&quot; width=&quot;24&quot; height=&quot;24&quot; viewBox=&quot;0 0 24 24&quot; fill=&quot;none&quot; stroke=&quot;currentColor&quot; stroke-width=&quot;2&quot; stroke-linecap=&quot;round&quot; stroke-linejoin=&quot;round&quot;><polyline points=&quot;20 6 9 17 4 12&quot;></polyline></svg>'; setTimeout(() => { btn.innerHTML = originalInnerHTML; }, 2000); })">
+              <img src="copy.png" alt="Copy" width="20" height="20" style="display: block;" />
+            </button>
           </div>
         `;
         

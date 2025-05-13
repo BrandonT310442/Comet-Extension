@@ -165,6 +165,7 @@
 <script>
 import Logo from './components/Logo.vue'
 import './dashboard.css'
+import katex from 'katex'
 
 export default {
   name: 'Dashboard',
@@ -207,9 +208,7 @@ export default {
   mounted() {
     // Listen for clicks outside dropdown
     document.addEventListener('click', this.handleOutsideClick);
-    
-    // Load MathJax
-    this.loadMathJax();
+  
   },
   beforeUnmount() {
     document.removeEventListener('click', this.handleOutsideClick);
@@ -247,38 +246,7 @@ export default {
         this.$router.push('/auth')
       }
     },
-    loadMathJax() {
-      // Create a script element for MathJax
-      const script = document.createElement('script');
-      script.src = 'mathjax.js';
-      script.async = true;
-      
-      // Configure MathJax
-      window.MathJax = {
-        tex: {
-          inlineMath: [['\\(', '\\)']],
-          displayMath: [['\\[', '\\]']]
-        },
-        startup: {
-          pageReady: () => {
-            console.log('MathJax is ready');
-          }
-        }
-      };
-      
-      // Append the script to the document
-      document.head.appendChild(script);
-    },
-    
-    // Add a method to process math after a message is added
-    processMathInMessages() {
-      // If MathJax is loaded, typeset the math
-      if (window.MathJax && window.MathJax.typesetPromise) {
-        window.MathJax.typesetPromise()
-          .catch((err) => console.error('MathJax typesetting failed: ', err));
-      }
-    },
-    
+  
     logout() {
       // Make a request to logout endpoint to clear cookies
       fetch('http://localhost:3000/auth/logout', {
@@ -494,8 +462,22 @@ export default {
       if (parts.length > 1) {
         // Process math in the text part (before the marker)
         parts[0] = parts[0]
-          .replace(/\\\((.*?)\\\)/g, '<span class="math-inline">\\($1\\)</span>')
-          .replace(/\\\[(.*?)\\\]/g, '<span class="math-display">\\[$1\\]</span>');
+          .replace(/\\\((.*?)\\\)/g, (match, p1) => {
+            try {
+              return katex.renderToString(p1, { displayMode: false });
+            } catch (e) {
+              console.error('KaTeX error:', e);
+              return match;
+            }
+          })
+          .replace(/\\\[(.*?)\\\]/g, (match, p1) => {
+            try {
+              return katex.renderToString(p1, { displayMode: true });
+            } catch (e) {
+              console.error('KaTeX error:', e);
+              return match;
+            }
+          });
         
         // Create the LaTeX code block for the part after the marker
         const latexCode = parts[1].trim();
@@ -530,8 +512,22 @@ export default {
       } else {
         // If no marker, process all math expressions
         escapedMessage = escapedMessage
-          .replace(/\\\((.*?)\\\)/g, '<span class="math-inline">\\($1\\)</span>')
-          .replace(/\\\[(.*?)\\\]/g, '<span class="math-display">\\[$1\\]</span>');
+          .replace(/\\\((.*?)\\\)/g, (match, p1) => {
+            try {
+              return katex.renderToString(p1, { displayMode: false });
+            } catch (e) {
+              console.error('KaTeX error:', e);
+              return match;
+            }
+          })
+          .replace(/\\\[(.*?)\\\]/g, (match, p1) => {
+            try {
+              return katex.renderToString(p1, { displayMode: true });
+            } catch (e) {
+              console.error('KaTeX error:', e);
+              return match;
+            }
+          });
       }
       
       // Convert line breaks to <br> tags
@@ -634,32 +630,3 @@ export default {
 /* CSS moved to dashboard.css */
 </style>
 
-// Create a script element for MathJax
-const script = document.createElement('script');
-script.src = 'mathjax.js';
-script.async = true;
-
-// Configure MathJax
-window.MathJax = {
-  tex: {
-    inlineMath: [['\\(', '\\)']],
-    displayMath: [['\\[', '\\]']]
-  },
-  startup: {
-    pageReady: () => {
-      console.log('MathJax is ready');
-    }
-  }
-};
-
-// Append the script to the document
-document.head.appendChild(script);
-
-// Add a method to process math after a message is added
-processMathInMessages() {
-  // If MathJax is loaded, typeset the math
-  if (window.MathJax && window.MathJax.typesetPromise) {
-    window.MathJax.typesetPromise()
-      .catch((err) => console.error('MathJax typesetting failed: ', err));
-  }
-}

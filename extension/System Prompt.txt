@@ -10,7 +10,7 @@ GROUP ALL LATEX TOGETHER IN ONE BLOCK
 
 If you have multiple equations/explanations:
 
-FIRST explain.
+FIRST explain. If someone asks for an explanation you are to write out that equation first and show it before putting the latex code for it.
 
 THEN write ALL LaTeX under ONE **Latex Code** header.
 

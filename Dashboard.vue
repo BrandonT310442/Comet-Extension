@@ -80,7 +80,7 @@
           </div>
         </div>
         
-        <div v-for="(message, index) in messages" :key="index" class="message-container" :class="message.role">
+        <div v-for="(message, index) in messages" :key="index" class="message-container" :class="[message.role, {'typing-message': message.isTyping}]">
           <div class="message-avatar" :class="message.role">
             <template v-if="message.role === 'user'">{{ getUserInitials() }}</template>
             <img v-else src="./LogoWhite.png" alt="Comet" class="ai-logo" />
@@ -94,7 +94,7 @@
           </div>
         </div>
         
-        <div v-if="isTyping" class="message-container assistant">
+        <div v-if="isTyping && !messages.some(m => m.isTyping)" class="message-container assistant">
           <div class="message-avatar assistant">
             <img src="./LogoWhite.png" alt="Comet" class="ai-logo" />
           </div>
@@ -195,7 +195,11 @@ export default {
         }
       ],
       currentModel: 'deepseek-chat',
-      systemPrompt: '' 
+      systemPrompt: '',
+      typingText: '',
+      fullResponseText: '',
+      typingSpeed: 5, // milliseconds per character
+      typingTimeout: null
     }
   },
   created() {
@@ -244,6 +248,38 @@ export default {
       } catch (error) {
         console.error('Error checking auth state:', error)
         this.$router.push('/auth')
+      }
+    },
+
+    animateTyping() {
+      // Clear any existing timeout
+      if (this.typingTimeout) {
+        clearTimeout(this.typingTimeout);
+      }
+      
+      if (this.typingText.length < this.fullResponseText.length) {
+        // Add the next character
+        this.typingText = this.fullResponseText.substring(0, this.typingText.length + 1);
+        
+        // Update the message content
+        const lastIndex = this.messages.length - 1;
+        this.messages[lastIndex].content = this.typingText;
+        
+        // Schedule the next character
+        this.typingTimeout = setTimeout(() => {
+          this.animateTyping();
+          
+          // Scroll to bottom as text is being typed
+          this.scrollToBottom();
+        }, this.typingSpeed);
+      } else {
+        // Animation complete
+        const lastIndex = this.messages.length - 1;
+        this.messages[lastIndex].isTyping = false;
+        this.isTyping = false;
+        
+        // Process math in messages if needed
+        // (This would be handled by your existing code)
       }
     },
   
@@ -378,16 +414,23 @@ export default {
         }
         
         const data = await response.json();
+        const responseContent = data.choices[0].message.content;
         
-        // Add assistant message from API response
+        // Add a placeholder message for the assistant that will be animated
         this.messages.push({
           role: 'assistant',
-          content: data.choices[0].message.content,
-          timestamp: new Date()
+          content: '',
+          timestamp: new Date(),
+          isTyping: true
         });
         
-        // Process math in messages
-      
+        // Store the full response text
+        this.fullResponseText = responseContent;
+        this.typingText = '';
+        
+        // Start the typing animation
+        this.animateTyping();
+        
       } catch (error) {
         console.error('Error calling DeepSeek API:', error);
         
@@ -397,9 +440,8 @@ export default {
           content: 'Sorry, I encountered an error while processing your request. Please try again later.',
           timestamp: new Date()
         });
-      } finally {
         this.isTyping = false;
-        
+      } finally {
         // If this is a new conversation, add it to history
         if (!this.currentChatId) {
           const newChat = {
@@ -504,15 +546,10 @@ export default {
           <div class="latex-code-block">
             <div class="latex-code-header">
               <span>LaTeX Code</span>
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-                </svg>
-              </button>
             </div>
             <pre class="latex-code-content">${highlightedCode}</pre>
             <button class="copy-button" onclick="navigator.clipboard.writeText(document.querySelector('pre.latex-code-content').textContent).then(() => { const btn = this; const originalInnerHTML = btn.innerHTML; btn.innerHTML = '<svg xmlns=&quot;http://www.w3.org/2000/svg&quot; width=&quot;24&quot; height=&quot;24&quot; viewBox=&quot;0 0 24 24&quot; fill=&quot;none&quot; stroke=&quot;currentColor&quot; stroke-width=&quot;2&quot; stroke-linecap=&quot;round&quot; stroke-linejoin=&quot;round&quot;><polyline points=&quot;20 6 9 17 4 12&quot;></polyline></svg>'; setTimeout(() => { btn.innerHTML = originalInnerHTML; }, 2000); })">
-              <img src="copy.png" alt="Copy" width="20" height="20" style="display: block;" />
+              <img src="copy.png" alt="Copy" width="18" height="18" style="display: block;" />
             </button>
           </div>
         `;

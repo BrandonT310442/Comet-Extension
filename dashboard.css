@@ -601,6 +601,7 @@
   backdrop-filter: blur(5px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
   transition: all 0.3s ease;
+  position: relative; /* Added for absolute positioning of copy button */
 }
 
 .latex-code-block:hover {
@@ -613,51 +614,74 @@
   justify-content: space-between;
   align-items: center;
   padding: 12px 16px;
-  background-color: rgba(241, 243, 245, 0.7);
+  background: linear-gradient(135deg, rgba(241, 243, 245, 0.9), rgba(248, 250, 252, 0.9));
   backdrop-filter: blur(5px);
   border-bottom: 1px solid rgba(224, 224, 224, 0.5);
 }
 
 .latex-code-header span {
   font-weight: 600;
-  color: #333;
+  color: #4f46e5;
   font-size: 0.95rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.latex-code-header span::before {
+  content: "";
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  background-color: #4f46e5;
+  border-radius: 50%;
 }
 
 /* Copy button styling */
 .copy-button {
+  position: absolute;
+  top: 8px;
+  right: 8px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
-  padding: 4px;
+  width: 36px;
+  height: 36px;
+  padding: 0;
   border: none;
-  background: transparent;
+  background: rgba(255, 255, 255, 0.8);
   cursor: pointer;
-  border-radius: 4px;
-  transition: background-color 0.2s;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  z-index: 10;
 }
 
 .copy-button:hover {
-  background-color: rgba(0, 0, 0, 0.05);
+  background-color: #f1f5fe;
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.15);
+  transform: translateY(-2px);
+}
+
+.copy-button:active {
+  transform: translateY(0);
 }
 
 .copy-button img {
   display: block;
-  width: 20px;
-  height: 20px;
+  width: 18px;
+  height: 18px;
 }
 
 .latex-code-content {
   margin: 0;
-  padding: 16px;
+  padding: 20px;
   overflow-x: auto;
   white-space: pre-wrap;
   font-size: 0.95rem;
   line-height: 1.6;
   color: #333;
-  background-color: rgba(255, 255, 255, 0.5);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(248, 250, 252, 0.9));
 }
 
 /* LaTeX Syntax Highlighting - Updated to match app theme */
@@ -689,8 +713,18 @@
   color: #10b981; /* Emerald - for brackets */
   font-weight: bold;
 }
-/* Add this to your dashboard.css file */
-/* Message Animation */
+/* Typing Animation Styles */
+.typing-message .message-text {
+  border-right: 2px solid #6366f1;
+  animation: cursor-blink 0.8s step-end infinite;
+}
+
+@keyframes cursor-blink {
+  from, to { border-color: transparent; }
+  50% { border-color: #6366f1; }
+}
+
+/* Message Animation - Updated */
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -714,6 +748,10 @@
   
   &.assistant {
     background: #f8fafc;
+  }
+  
+  &.typing-message .message-text {
+    display: inline-block;
   }
 }
 

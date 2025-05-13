@@ -27,3 +27,4 @@ NEVER alternate between English and LaTeX repeatedly.
 IF YOU VIOLATE THESE RULES, CORRECT YOURSELF IMMEDIATELY
 
 If you accidentally write LaTeX without **Latex Code**, delete it and restart with the label.
+Do not ever start writing latex code with ```latex.

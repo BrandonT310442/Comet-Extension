@@ -241,13 +241,7 @@ export default {
         this.userName = data.user.name || data.user.displayName || 'User'
         this.userEmail = data.user.email || ''
         
-        // If in Chrome extension context, update chrome.storage
-        if (typeof chrome !== 'undefined' && chrome.runtime && chrome.storage) {
-          chrome.storage.local.set({
-            'userName': this.userName,
-            'userEmail': this.userEmail
-          })
-        }
+    
       } catch (error) {
         console.error('Error checking auth state:', error)
         this.$router.push('/auth')
@@ -322,12 +316,6 @@ export default {
         method: 'POST',
         credentials: 'include'
       }).finally(() => {
-        // If in Chrome extension context, clear chrome.storage
-        if (typeof chrome !== 'undefined' && chrome.runtime && chrome.storage) {
-          chrome.storage.local.remove(['userName', 'userEmail'])
-        }
-        
-        // Redirect to auth page
         this.$router.push('/auth')
       })
     },
@@ -720,17 +708,6 @@ export default {
           credentials: 'include' // Important for cookies
         });
 
-        // Remove all authentication data from localStorage
-        localStorage.removeItem('isAuthenticated');
-        localStorage.removeItem('userName');
-        localStorage.removeItem('userEmail');
-        
-        // If in Chrome extension context, also clear chrome.storage
-        if (typeof chrome !== 'undefined' && chrome.runtime && chrome.storage) {
-          chrome.storage.local.remove(['isAuthenticated', 'userName', 'userEmail'], () => {
-            console.log('Chrome storage cleared');
-          });
-        }
 
         // Redirect to auth page
         this.$router.push('/auth');

@@ -150,17 +150,6 @@ export default {
     },
     async handleLogin() {
       try {
-        // Send message to background script if in Chrome extension context
-        if (typeof chrome !== 'undefined' && chrome.runtime) {
-          chrome.runtime.sendMessage({
-            action: 'login',
-            data: {
-              email: this.form.email,
-              password: this.form.password
-            }
-          })
-        }
-        
         const response = await fetch('http://localhost:3000/auth/login', {
           method: 'POST',
           headers: {
@@ -188,19 +177,11 @@ export default {
           name: data.user.name || ''
         }
         
-        // For Chrome extension, use storage.local
-        if (typeof chrome !== 'undefined' && chrome.runtime && chrome.storage) {
-          chrome.storage.local.set({ 
-            'userName': data.user.name || '',
-            'userEmail': data.user.email || ''
-          })
-        }
-        
         // Redirect to dashboard
         this.$router.push('/')
       } catch (error) {
         console.error('Login error:', error)
-        throw error
+        this.errorMsg = error.message
       }
     },
     async handleSubmit() {
@@ -260,9 +241,7 @@ export default {
           // Set a flag in localStorage to indicate the user is authenticated
           localStorage.setItem('isAuthenticated', 'true')
           
-          // Store user data in localStorage for persistence
-          if (data.user.name) localStorage.setItem('userName', data.user.name);
-          if (data.user.email) localStorage.setItem('userEmail', data.user.email);
+      
           
           // Store minimal non-sensitive data in memory
           this.user = {
@@ -270,17 +249,7 @@ export default {
             email: data.user.email,
             name: data.user.name || ''
           }
-          
-          // For Chrome extension, use storage.local as well
-          if (typeof chrome !== 'undefined' && chrome.runtime && chrome.storage) {
-            chrome.storage.local.set({ 
-              'isAuthenticated': true,
-              'userName': data.user.name || '',
-              'userEmail': data.user.email || ''
-            }, function() {
-              console.log('Authentication state and user data saved in chrome.storage');
-            });
-          }
+  
           
           // Redirect to dashboard - use a slight delay to ensure storage is set
           setTimeout(() => {

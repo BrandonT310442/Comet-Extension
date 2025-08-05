@@ -62,21 +62,7 @@
         <div v-if="messages.length === 0" class="empty-chat">
           <div class="welcome-container">
             <h2>Welcome to Comet</h2>
-            <p>The AI Editor for Overleaf — Edit your LaTeX documents effortlessly</p>
-            <div class="stats-container">
-              <div class="stat-item">
-                <div class="stat-value">10</div>
-                <div class="stat-label">Faster Edits</div>
-              </div>
-              <div class="stat-item">
-                <div class="stat-value">98</div>
-                <div class="stat-label">Accuracy Rate</div>
-              </div>
-              <div class="stat-item">
-                <div class="stat-value">24/7</div>
-                <div class="stat-label">Availability</div>
-              </div>
-            </div>
+            <p>Comet helps you write, edit, and refine LaTeX documents with AI-powered assistance, making your academic writing process faster and more efficient.</p>
           </div>
         </div>
         
@@ -226,30 +212,12 @@ export default {
   },
   methods: {
     async checkAuthState() {
-      try {
-        // Only verify with the server using cookies
-        const response = await fetch('http://localhost:3000/auth/user', {
-          method: 'GET',
-          credentials: 'include' // This sends the cookies
-        })
-        
-        const data = await response.json()
-        
-        if (!data.user) {
-          // Redirect to auth page if not authenticated
-          this.$router.push('/auth')
-          return
-        }
-        
-        // Set user data from server response
-        this.userName = data.user.name || data.user.displayName || 'User'
-        this.userEmail = data.user.email || ''
-        
-    
-      } catch (error) {
-        console.error('Error checking auth state:', error)
-        this.$router.push('/auth')
-      }
+      // No authentication required - dashboard is accessible to everyone
+      console.log('Dashboard is accessible without authentication');
+      
+      // Use default user data for non-authenticated users
+      this.userName = 'Guest User';
+      this.userEmail = 'guest@example.com';
     },
 
     handleCopyButtonClick(event) {

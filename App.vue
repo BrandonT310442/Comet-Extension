@@ -12,76 +12,8 @@
 export default {
   name: 'App',
   mounted() {
-    // Check if we're in a Chrome extension context
-    const isExtension = typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.id;
-    
-    // Check authentication state
-    if (isExtension) {
-      // Use Chrome messaging for extensions
-      chrome.runtime.sendMessage({ action: 'check-auth' }, (response) => {
-        if (response && response.authenticated) {
-          console.log('Already authenticated in Chrome extension', response.user);
-          
-          // Store auth flag in localStorage
-          localStorage.setItem('isAuthenticated', 'true');
-          
-          // User is authenticated, allow them to stay on the current page
-          // No need to redirect since Dashboard is now the main page
-        } else {
-          console.log('Not authenticated in Chrome extension');
-          
-          // If not authenticated and not on auth page or callback, redirect to auth
-          if (this.$route.path !== '/auth' && this.$route.path !== '/callback' && this.$route.path !== '/verify-email') {
-            // Remove auth flag
-            localStorage.removeItem('isAuthenticated');
-            
-            // Redirect to auth page
-            this.$router.push('/auth');
-          }
-        }
-      });
-    } else {
-      // Standard web app flow - check localStorage and cookies
-      const isAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
-      
-      if (isAuthenticated) {
-        // Verify with the server that the session is still valid
-        fetch('http://localhost:3000/auth/user', {
-          method: 'GET',
-          credentials: 'include' // This sends the cookies
-        })
-          .then(response => response.json())
-          .then(data => {
-            if (data.user) {
-              console.log('Already authenticated in web app', data.user);
-              // User is authenticated, allow them to stay on the current page
-              // No need to redirect since Dashboard is now the main page
-            } else {
-              console.log('Session expired in web app');
-              localStorage.removeItem('isAuthenticated');
-              
-              // If not on auth page or callback, redirect to auth
-              if (this.$route.path !== '/auth' && this.$route.path !== '/callback' && this.$route.path !== '/verify-email') {
-                this.$router.push('/auth');
-              }
-            }
-          })
-          .catch(error => {
-            console.error('Error checking auth state:', error);
-            localStorage.removeItem('isAuthenticated');
-            
-            // If not on auth page or callback, redirect to auth
-            if (this.$route.path !== '/auth' && this.$route.path !== '/callback' && this.$route.path !== '/verify-email') {
-                this.$router.push('/auth');
-            }
-          });
-      } else {
-        // Not authenticated, redirect to auth unless already on auth-related pages
-        if (this.$route.path !== '/auth' && this.$route.path !== '/callback' && this.$route.path !== '/verify-email') {
-          this.$router.push('/auth');
-        }
-      }
-    }
+    // No authentication checks - dashboard is accessible to everyone
+    console.log('App mounted - dashboard is accessible without authentication');
   }
 }
 </script>
@@ -131,7 +63,10 @@ export default {
 }
 
 html, body {
+  width: 100%;
   height: 100%;
+  margin: 0;
+  padding: 0;
   background: var(--background-primary);
   color: var(--text-primary);
   font-size: 16px;
@@ -142,10 +77,11 @@ html, body {
 }
 
 .app {
-  min-height: 100vh;
+  width: 100%;
+  height: 100vh;
   background: var(--gradient-dark);
   position: relative;
-  overflow-x: hidden;
+  overflow: hidden;
 }
 
 // Dynamic stars background effect
